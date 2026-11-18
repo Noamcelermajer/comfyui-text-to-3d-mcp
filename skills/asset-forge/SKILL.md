@@ -29,7 +29,7 @@ Exit code 0 = ok, 2 = finished but the mesh failed its check, 1 = error.
 
 1. **Pick a profile** with `list_profiles`. Image profiles make pictures (`concept_prop`,
    `concept_character`, `icon`, `illustration`); asset profiles make 3D models
-   (`prop_lowpoly`, `prop_hero`, `character_lowpoly`). Profiles marked `experimental`
+   (`prop_lowpoly`, `character_lowpoly`), each with three presets (see below). Profiles marked `experimental`
    have not been verified on this machine - say so if you use one.
 2. **Always pass the game project folder** (`project_dir` / `--project`). Its
    `assetforge.json` supplies the art style, the output folder and per-profile settings,
@@ -42,6 +42,24 @@ Exit code 0 = ok, 2 = finished but the mesh failed its check, 1 = error.
    asset at a time - there is one GPU.
 5. **Look at the result.** A finished job returns a rendered preview (front and
    three-quarter view) and a mesh check. Do not report success without looking at the preview.
+
+## Presets
+
+Pass `preset` to `generate_asset` (`--preset` on the command line). Pick by what the
+asset is for, and say which one you used.
+
+| Preset | Use it for | Cost |
+| :--- | :--- | :--- |
+| `fast` | Blocking out, background clutter, distant or mobile assets: the lowest triangle count (about 800 for a prop, 4,000 for a character). | about 2 minutes |
+| `standard` | The default. 3,000-triangle props, 12,000-triangle characters. | 4-5 minutes |
+| `max` | Hero assets the camera gets close to. Props get full resolution and 8,000 triangles. Characters use split generation: the head is generated as its own model and fitted onto the body, which makes the face much sharper. | 10-15 minutes |
+
+`max` on a character is experimental: check the preview for a lumpy hat or hair, texture
+speckles, or a misplaced head. The result reports `split.assembled` and `split.skipped`;
+if the head was skipped, you got the one-piece model. The one-piece body is always kept
+in `<name>_parts/base_one_piece.glb`.
+
+A different preset for the same name regenerates the model but reuses the concept image.
 
 ## Writing prompts
 

@@ -33,6 +33,11 @@ They are used under the MIT License:
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
 
+The head-isolation prompt in `profiles/isolate_head.json` and the part settings in
+`profiles/part_lowpoly.json` follow the method and the example prompts of
+[PixelArtistry-Split-Character](https://github.com/pixelartistry/PixelArtistry-Split-Character)
+(MIT, Copyright (c) 2026 PixelArtistry). The automatic assembly step is Asset Forge's own.
+
 ## Not included
 
 This repository contains no model weights and no ComfyUI node packs. The models and

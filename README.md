@@ -106,6 +106,35 @@ the model from that picture.
 `.mcp.json`, `.claude/skills/` and `AGENTS.md` inside that project). Each edited file is
 backed up once as `<file>.assetforge.bak`.
 
+## Presets
+
+Every asset profile takes a preset: `--preset fast|standard|max` on the command line,
+`"preset"` in an MCP call or a batch job.
+
+| Preset | What it does | Prop (measured) | Character (measured) |
+| :--- | :--- | :--- | :--- |
+| `fast` | Lowest triangle count, coarser grids, fewer sampling steps and texture views. For blocking out, background clutter, mobile. | 800 triangles, 2.2 min | 4,000 triangles, not yet measured |
+| `standard` | The profile's tuned defaults. | 3,000 triangles, 4.4 min | 12,000 triangles, 4 min |
+| `max` | Props: full shape resolution, 8,000 triangles, more texture sampling. **Characters: split generation** - the body is built at full resolution, the head is isolated by the image model and built as its own model, then scaled, placed and joined onto the body automatically. | 8,000 triangles, not yet measured | about 15,700 triangles, 12.5 min |
+
+Timings are the 3D stage on an RTX 5080.
+
+Standard (left pair) against max (right pair) on the same concept image:
+
+![standard vs max head](docs/preset_standard_vs_max_head.png)
+
+What split generation buys and costs, from that test: the face is far sharper (eyes,
+brow and wrinkles are readable) and the head sits on the body with no visible seam from
+the front. The hat came out lumpier than in the one-piece model and the texture has dark
+speckles in the beard, so `max` is marked experimental - look at the preview before
+keeping it. The one-piece body is kept in `<name>_parts/base_one_piece.glb`, and if a
+part fails its mesh check or cannot be fitted, the one-piece model is returned instead.
+
+The result is one `.glb` with two meshes (`body`, `head`) and two materials. Only the
+head is split today; parts are declared in the profile (`presets.max.split.parts`) and
+each needs a region finder and an attach routine in `assetforge/split.py`, so limbs or
+accessories can be added the same way.
+
 ## Customising - four levels
 
 Later levels override earlier ones.
@@ -113,7 +142,8 @@ Later levels override earlier ones.
 1. **Profile** (`profiles/*.json`) - one way of making something: which graph to run,
    its parameters and defaults, the prompt template, retry rules.
 2. **Hardware tier** - a profile's `tiers` block for 8 / 12 / 16 / 24 GB cards. The tier
-   is detected by `doctor` and stored in `machine.json`.
+   is detected by `doctor` and stored in `machine.json`. The chosen **preset** (`presets`
+   block) is applied next.
 3. **Project** (`<game>/assetforge.json`, created by `forge.py init <game>`):
 
    ```json
@@ -158,6 +188,7 @@ A full profile has these parts:
 | `image_profile` | Asset profiles: which image profile draws the concept picture. |
 | `check`, `retry` | Mesh-check limits, and how parameters change on each retry. |
 | `tiers` | Overrides per VRAM tier. |
+| `presets` | `fast` and `max` blocks: `params` overrides, `image_params` for the concept image, and optionally `split` (parts to build separately). |
 | `vram_group` | Profiles in the same group keep their weights loaded between runs; VRAM is freed when the group changes. |
 | `status` | `tested` once you have verified it on real output, otherwise `experimental`. |
 
@@ -204,8 +235,9 @@ To move Asset Forge to another machine: copy this folder, run `forge.py doctor`,
 ## Status and limits
 
 - Profiles marked `tested` (`concept_prop`, `concept_character`, `prop_lowpoly`,
-  `character_lowpoly`) have been run end to end and inspected. `icon`, `illustration` and
-  `prop_hero` are `experimental`.
+  `character_lowpoly`) have been run end to end and inspected at the standard preset;
+  `fast` was verified on a prop and `max` on a character. `icon` and `illustration`, prop
+  `max` and character `fast` have not been run yet.
 - Thin, lace-like or caged shapes are the usual failure; the mesh check catches them and
   the skill explains the fixes (`thin` parameter, a chunkier prompt).
 - The character profile asks for an A-pose; the image model sometimes draws a T-pose.

@@ -112,7 +112,8 @@ def t_generate_asset(a):
         raise ValueError("give a prompt or an image path")
     fn = lambda: pipeline.generate_asset(a.get("profile", "prop_lowpoly"), a["name"], a.get("prompt"), a.get("image"),
                                          a.get("project_dir"), a.get("out_dir"), a.get("seed"), a.get("style", ""),
-                                         a.get("params"), a.get("image_only", False), a.get("force", False))
+                                         a.get("params"), a.get("image_only", False), a.get("force", False),
+                                         preset=a.get("preset", "standard"))
     return _submit("asset", a["name"], fn, a.get("wait_seconds", 50))
 
 
@@ -170,6 +171,8 @@ TOOLS = {
                         "prompt": {"type": "string", "description": "What the asset is: materials, colours, wear, proportions. Not needed when `image` is given or a concept image already exists for this name."},
                         "image": {"type": "string", "description": "Absolute path of a concept image to build from instead of generating one."},
                         "image_only": {"type": "boolean", "description": "Stop after the concept image."},
+                        "preset": {"type": "string", "enum": ["fast", "standard", "max"],
+                                   "description": "fast = lowest triangle count and quickest; standard = the profile's tuned default; max = highest quality (characters: the head is generated separately and fitted on, which takes several times longer)."},
                         **_COMMON}, ["name"]),
     "get_job": (t_get_job, "Status or result of a generate_* job. Finished asset jobs include the mesh check and a preview render.",
                 {"id": {"type": "string"}, "wait_seconds": _WAIT}, ["id"]),

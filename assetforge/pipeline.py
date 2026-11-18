@@ -7,7 +7,7 @@ import re
 import shutil
 import uuid
 
-from . import comfy, meshcheck, profiles
+from . import comfy, meshcheck, profiles, split
 from .config import load_machine, log
 
 OUT_SUBFOLDER = "assetforge"
@@ -101,12 +101,14 @@ def build_prompt(profile, prompt, style=""):
 
 
 def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, seed=None, style="",
-                   params=None, force=False):
+                   params=None, force=False, source_image=None):
     """Text -> image with an image profile. Returns a manifest dict."""
     name = safe_name(name)
     p = profiles.resolve(profile_id, project_dir, params)
-    if p.get("kind") != "image":
+    if p.get("kind") not in ("image", "image_edit"):
         raise ValueError(f"'{profile_id}' is not an image profile")
+    if p["kind"] == "image_edit" and not source_image:
+        raise ValueError(f"'{profile_id}' edits a picture: give source_image")
     out = out_dir_for(project_dir, out_dir)
     os.makedirs(out, exist_ok=True)
     dst = os.path.join(out, f"{name}.png")
@@ -116,8 +118,13 @@ def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, see
     seed = random.randrange(1, 2**31) if seed is None else int(seed)
     full = build_prompt(p, prompt, style)
     ctx = {**p["params"], "prompt": prompt, "full_prompt": full, "seed": seed, "name": name}
+    run_tag = f"{name}_{uuid.uuid4().hex[:6]}"
+    if source_image:
+        ctx["image_file"] = f"{run_tag}_src{os.path.splitext(source_image)[1].lower()}"
+        os.makedirs(comfy.input_dir(), exist_ok=True)
+        shutil.copyfile(source_image, os.path.join(comfy.input_dir(), ctx["image_file"]))
     log(f"[{name}] image via {profile_id} ...")
-    files, seconds, steps = run_profile(p, ctx, f"{name}_{uuid.uuid4().hex[:6]}")
+    files, seconds, steps = run_profile(p, ctx, run_tag)
     if not files.get("image"):
         raise comfy.ComfyError("the image run finished but wrote no image")
     shutil.copyfile(files["image"], dst)
@@ -126,10 +133,10 @@ def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, see
 
 
 def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, out_dir=None, seed=None,
-                   style="", params=None, image_only=False, force=False, preview=True):
+                   style="", params=None, image_only=False, force=False, preview=True, preset="standard"):
     """Text or image -> checked .glb with an asset profile. Returns a manifest dict."""
     name = safe_name(name)
-    p = profiles.resolve(profile_id, project_dir, params)
+    p = profiles.resolve(profile_id, project_dir, params, preset)
     if p.get("kind") != "asset":
         raise ValueError(f"'{profile_id}' is not an asset profile")
     out = out_dir_for(project_dir, out_dir)
@@ -138,11 +145,14 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
     final_glb, concept = os.path.join(out, f"{name}.glb"), os.path.join(out, f"{name}.png")
 
     if not force and not image_only and os.path.isfile(final_glb) and os.path.isfile(manifest_path):
-        return {**json.load(open(manifest_path, encoding="utf-8-sig")), "cached": True}
+        old = json.load(open(manifest_path, encoding="utf-8-sig"))
+        if old.get("preset", "standard") == p["preset"]:  # a different preset is a different asset
+            return {**old, "cached": True}
 
     comfy.ensure_server()
     seed = random.randrange(1, 2**31) if seed is None else int(seed)
-    result = {"name": name, "profile": profile_id, "status": "error", "seed": seed, "timings": {}, "attempts": []}
+    result = {"name": name, "profile": profile_id, "preset": p["preset"], "status": "error", "seed": seed,
+              "timings": {}, "attempts": []}
 
     # Stage 1 - concept image: supplied, reused from an earlier image-only run, or generated.
     if image:
@@ -156,7 +166,8 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
     else:
         if not prompt:
             raise ValueError("give a prompt or an image")
-        img = generate_image(p["image_profile"], name, prompt, project_dir, out, seed, style, force=True)
+        img = generate_image(p["image_profile"], name, prompt, project_dir, out, seed, style,
+                             params=p.get("image_params"), force=True)
         result.update(image_source="generated", prompt=prompt, image_prompt=img["image_prompt"])
         result["timings"]["image_s"] = img["seconds"]
     result["image"] = concept
@@ -201,6 +212,13 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
 
     result["glb"] = final_glb
     result["status"] = "ok" if not result["problems"] else "failed_check"
+
+    # Stage 3 (max preset) - build parts on their own and fit them onto the base model.
+    if p.get("split") and result["status"] == "ok":
+        result["split"] = _split_stage(p, name, concept, final_glb, out, seed, project_dir, result)
+        if result["split"].get("assembled"):
+            stats, problems = meshcheck.check_mesh(final_glb, None, p.get("check", {}).get("limits"))
+            result.update(mesh=stats, problems=problems, status="ok" if not problems else "failed_check")
     if preview:
         try:
             result["preview"] = meshcheck.render_preview(final_glb, os.path.join(out, f"{name}_preview.png"))
@@ -208,6 +226,38 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
             result["preview_error"] = str(e)
     json.dump(result, open(manifest_path, "w", encoding="utf-8"), indent=2)
     return result
+
+
+def _split_stage(p, name, concept, base_glb, out, seed, project_dir, result):
+    """Isolate each configured part from the concept image, build it as its own model,
+    and attach it to the base. A part that fails leaves the one-piece model in place."""
+    from PIL import Image
+
+    parts_dir = os.path.join(out, f"{name}_parts")
+    os.makedirs(parts_dir, exist_ok=True)
+    shutil.copyfile(base_glb, os.path.join(parts_dir, "base_one_piece.glb"))
+    report = {"assembled": [], "skipped": [], "folder": parts_dir}
+    for part in p["split"]["parts"]:
+        pid = part["id"]
+        try:
+            img = Image.open(concept)
+            box, info = split.REGION_FINDERS[pid](img)
+            crop_path = os.path.join(parts_dir, f"{pid}_crop.png")
+            img.crop(box).resize((1024, 1024), Image.LANCZOS).save(crop_path)
+            iso = generate_image(part["isolate_profile"], f"{pid}", part.get("prompt", ""), project_dir, parts_dir,
+                                 seed, force=True, source_image=crop_path)
+            model = generate_asset(part["part_profile"], pid, image=iso["image"], project_dir=project_dir,
+                                   out_dir=parts_dir, seed=seed, params=part.get("params"), force=True, preview=False)
+            result["timings"][f"{pid}_s"] = round(iso["seconds"] + model["timings"].get("model_s", 0), 1)
+            if model["status"] != "ok":
+                report["skipped"].append({"part": pid, "reason": "; ".join(model.get("problems", [])) or model["status"]})
+                continue
+            fit = split.ATTACHERS[pid](base_glb, model["glb"], base_glb)
+            report["assembled"].append({**fit, "crop_box": list(box), **info})
+        except Exception as e:  # keep the one-piece result rather than fail the whole asset
+            report["skipped"].append({"part": pid, "reason": f"{type(e).__name__}: {e}"})
+            log(f"[{name}] part '{pid}' skipped: {e}")
+    return report
 
 
 def generate_batch(jobs, project_dir=None, out_dir=None, style="", force=False):
@@ -221,7 +271,8 @@ def generate_batch(jobs, project_dir=None, out_dir=None, style="", force=False):
             continue
         try:
             generate_asset(job["profile"], name, job.get("prompt"), None, project_dir, out_dir, job.get("seed"),
-                           job.get("style", style), job.get("params"), image_only=True, force=force)
+                           job.get("style", style), job.get("params"), image_only=True, force=force,
+                           preset=job.get("preset", "standard"))
         except Exception as e:
             results[name] = {"name": name, "status": "error", "error": f"{type(e).__name__}: {e}"}
     for job in jobs:
@@ -236,7 +287,8 @@ def generate_batch(jobs, project_dir=None, out_dir=None, style="", force=False):
                 # force only affects stage 1 above; here the fresh concept image is reused
                 results[name] = generate_asset(job["profile"], name, None if not job.get("image") else job.get("prompt"),
                                                job.get("image"), project_dir, out_dir, job.get("seed"),
-                                               job.get("style", style), job.get("params"), force=force)
+                                               job.get("style", style), job.get("params"), force=force,
+                                               preset=job.get("preset", "standard"))
         except Exception as e:
             results[name] = {"name": name, "status": "error", "error": f"{type(e).__name__}: {e}"}
     return list(results.values())

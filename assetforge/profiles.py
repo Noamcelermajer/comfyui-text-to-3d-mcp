@@ -3,6 +3,7 @@
 Settings are layered, later layers win:
   1. the profile file (and whatever it `extends`)
   2. the profile's block for this machine's VRAM tier      ("tiers": {"8": {...}})
+     then the chosen preset - fast / standard / max        ("presets": {"fast": {...}})
   3. the project's assetforge.json                          ("profiles": {"<id>": {...}})
   4. the arguments of the call
 
@@ -53,7 +54,10 @@ def _extended(pid, raw, seen=()):
     return dict(p)
 
 
-def resolve(pid, project_dir=None, params=None):
+PRESETS = ("fast", "standard", "max")
+
+
+def resolve(pid, project_dir=None, params=None, preset=None):
     """Return the profile with every layer applied; `params` are the call's overrides."""
     raw = _raw_profiles(project_dir)
     p = _extended(pid, raw)
@@ -61,7 +65,17 @@ def resolve(pid, project_dir=None, params=None):
     tier_block = (p.get("tiers") or {}).get(str(load_machine()["tier"]), {})
     project = load_project(project_dir)
     proj_block = (project.get("profiles") or {}).get(pid, {})
-    for layer in (tier_block, proj_block):
+    preset_block = {}
+    if preset and preset != "standard":
+        preset_block = (p.get("presets") or {}).get(preset) or {}
+        if not preset_block:
+            have = ["standard"] + [k for k, v in (p.get("presets") or {}).items() if v]
+            raise ValueError(f"profile '{pid}' has no '{preset}' preset. It has: {', '.join(have)}")
+        for key in ("image_params", "split"):
+            if key in preset_block:
+                p[key] = preset_block[key]
+    p["preset"] = preset or "standard"
+    for layer in (tier_block, preset_block, proj_block):
         p["params"] = {**p.get("params", {}), **layer.get("params", {})}
         p["set"] = {**p.get("set", {}), **layer.get("set", {})}
     unknown = [k for k in (params or {}) if k not in p["params"]]
@@ -93,5 +107,8 @@ def list_profiles(project_dir=None):
         out.append({"id": pid, "kind": p.get("kind"), "title": p.get("title", ""), "description": p.get("description", ""),
                     "status": p.get("status", "experimental"), "min_vram_gb": p.get("min_vram_gb", 0),
                     "params": params, "requires": p.get("requires", []),
-                    "image_profile": p.get("image_profile")})
+                    "image_profile": p.get("image_profile"),
+                    "presets": {"standard": "the profile's own settings",
+                                **{k: v.get("description", "") for k, v in (p.get("presets") or {}).items() if v}}
+                    if p.get("kind") == "asset" else None})
     return out

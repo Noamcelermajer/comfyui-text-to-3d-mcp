@@ -1,4 +1,4 @@
-﻿{
+{
   "id": "prop_lowpoly",
   "kind": "asset",
   "title": "Low-poly prop",
@@ -8,7 +8,6 @@
   "graph": "../workflows/lowpoly_prop_ultratex.json",
   "vram_group": "mesh",
   "min_vram_gb": 8,
-
   "params": {
     "tris": 3000,
     "thin": 0.6,
@@ -20,7 +19,16 @@
     "quad_resolution": 1024,
     "components": "keep_all",
     "tiled_decode": false,
-    "clean_ram": false
+    "clean_ram": false,
+    "wtivo_resolution": 1536,
+    "proxy_points": 12000000,
+    "albedo_views": 12,
+    "structure_steps": 12,
+    "shape_steps": 20,
+    "upsample_steps": 12,
+    "texture_steps": 4,
+    "texture_extra_steps": 4,
+    "normal_map_size": 2048
   },
   "param_help": {
     "tris": "triangle budget of the final mesh",
@@ -30,9 +38,12 @@
     "highpoly_faces": "size of the high-poly mesh the normal map is baked from (trimmed on the GPU)",
     "shape_resolution": "voxel resolution of the high-poly shape: 1024 or 1536. Measured on one prop: 1536 took 810 s, 1024 took 322 s, with no visible difference at 3,000 triangles",
     "quad_resolution": "512 / 1024 / 1536; 1536 runs out of memory on 16 GB",
-    "components": "keep_all keeps separate parts; largest drops everything but the biggest piece"
+    "components": "keep_all keeps separate parts; largest drops everything but the biggest piece",
+    "wtivo_resolution": "grid of the watertight rebuild: 1024 is about twice as fast as 1536",
+    "albedo_views": "colour views painted by the texture model: 6, 10 or 12",
+    "texture_steps": "sampling steps of the texture model; 4 is quick, 8-12 keeps more surface detail",
+    "structure_steps": "sampling steps of the three shape stages (structure / shape / upsample)"
   },
-
   "set": {
     "122.image": "{image_file}",
     "316.value": "{trellis}",
@@ -52,15 +63,30 @@
     "364.tiled_decode": "{tiled_decode}",
     "326.clean_ram": "{clean_ram}",
     "340.clean_ram": "{clean_ram}",
-    "383.clean_ram": "{clean_ram}"
+    "383.clean_ram": "{clean_ram}",
+    "327.input_res": "{wtivo_resolution}",
+    "327.final_res": "{wtivo_resolution}",
+    "327.proxy_points": "{proxy_points}",
+    "358.view_count": "{albedo_views}",
+    "358.steps": "{texture_steps}",
+    "358.extra_steps": "{texture_extra_steps}",
+    "364.steps": "{texture_steps}",
+    "364.extra_steps": "{texture_extra_steps}",
+    "3.steps": "{structure_steps}",
+    "18.steps": "{shape_steps}",
+    "23.steps": "{upsample_steps}",
+    "341.normal_map_resolution": "{normal_map_size}"
   },
   "replace_nodes": {
     "328": {
       "class_type": "CuMeshGeometryDecimate",
       "inputs": {
-        "mesh": ["327", 0],
+        "mesh": [
+          "327",
+          0
+        ],
         "target_faces": "{highpoly_faces}",
-        "initial_threshold": 1e-8,
+        "initial_threshold": 1e-08,
         "edge_length_weight": 0.01,
         "skinny_triangle_weight": 0.001,
         "unload_models": false,
@@ -69,24 +95,102 @@
       }
     }
   },
-  "seed_inputs": ["3.seed", "18.seed", "23.seed"],
-
+  "seed_inputs": [
+    "3.seed",
+    "18.seed",
+    "23.seed"
+  ],
   "outputs": {
-    "glb": {"node": "386", "ext": ".glb"},
-    "lowpoly_untextured": {"node": "343", "ext": ".glb", "keep": false},
-    "utx": {"node": "361", "ext": ".glb", "keep": false},
-    "base_color": {"node": "362", "ext": ".png"},
-    "roughness": {"node": "366", "ext": ".png"},
-    "metallic": {"node": "367", "ext": ".png"}
+    "glb": {
+      "node": "386",
+      "ext": ".glb"
+    },
+    "lowpoly_untextured": {
+      "node": "343",
+      "ext": ".glb",
+      "keep": false
+    },
+    "utx": {
+      "node": "361",
+      "ext": ".glb",
+      "keep": false
+    },
+    "base_color": {
+      "node": "362",
+      "ext": ".png"
+    },
+    "roughness": {
+      "node": "366",
+      "ext": ".png"
+    },
+    "metallic": {
+      "node": "367",
+      "ext": ".png"
+    }
   },
   "primary_output": "glb",
-
-  "check": {"enabled": true, "target_param": "tris"},
-  "retry": {"attempts": 1, "reseed": true, "add": {"thin": 0.2}},
-
+  "check": {
+    "enabled": true,
+    "target_param": "tris"
+  },
+  "retry": {
+    "attempts": 1,
+    "reseed": true,
+    "add": {
+      "thin": 0.2
+    }
+  },
   "tiers": {
-    "8":  {"params": {"tiled_decode": true, "clean_ram": true, "quad_resolution": 512, "shape_resolution": 1024}},
-    "12": {"params": {"tiled_decode": true, "quad_resolution": 1024, "shape_resolution": 1024}},
-    "24": {"params": {"quad_resolution": 1536, "shape_resolution": 1536}}
+    "8": {
+      "params": {
+        "tiled_decode": true,
+        "clean_ram": true,
+        "quad_resolution": 512,
+        "shape_resolution": 1024
+      }
+    },
+    "12": {
+      "params": {
+        "tiled_decode": true,
+        "quad_resolution": 1024,
+        "shape_resolution": 1024
+      }
+    },
+    "24": {
+      "params": {
+        "quad_resolution": 1536,
+        "shape_resolution": 1536
+      }
+    }
+  },
+  "presets": {
+    "fast": {
+      "description": "Quickest usable result at the lowest triangle count: coarser grids, fewer sampling steps, fewer texture views.",
+      "params": {
+        "tris": 800,
+        "lowpoly_passes": 8,
+        "wtivo_resolution": 1024,
+        "proxy_points": 6000000,
+        "quad_resolution": 512,
+        "albedo_views": 6,
+        "structure_steps": 8,
+        "shape_steps": 12,
+        "upsample_steps": 8,
+        "normal_map_size": 1024
+      },
+      "image_params": {
+        "steps": 12
+      }
+    },
+    "max": {
+      "description": "Highest quality in one piece: full shape resolution, more triangles, more texture sampling.",
+      "params": {
+        "tris": 8000,
+        "lowpoly_passes": 4,
+        "shape_resolution": 1536,
+        "texture_steps": 10,
+        "texture_extra_steps": 10
+      }
+    }
   }
 }
