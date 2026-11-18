@@ -1,0 +1,8 @@
+{
+  "id": "concept_character",
+  "extends": "_qwen_image_base",
+  "title": "Character concept image",
+  "description": "A full-body character in an A-pose, front view, plain white background - the framing rigging tools expect. Describe only the person and outfit; no held items.",
+  "status": "tested",
+  "prompt_template": "{prompt}. {style} Standing in an A-pose, arms straight and held about 45 degrees away from the body, fingers together, legs shoulder-width apart, feet pointing forward. Full body from head to toe, front view, orthographic, eye-level, centered, the character fills 90% of the frame height, nothing cropped. Stylized 3D game character render, clean readable shapes. Soft even studio lighting, no harsh shadows. No hand-held props, no text, no ground shadow. Plain white background."
+}

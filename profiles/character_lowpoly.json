@@ -1,0 +1,16 @@
+{
+  "id": "character_lowpoly",
+  "extends": "prop_lowpoly",
+  "title": "Low-poly character",
+  "description": "A full-body character at about 12,000 triangles, in an A-pose, ready for auto-rigging. Hold weapons and items as separate props.",
+  "status": "tested",
+  "image_profile": "concept_character",
+  "graph": "../workflows/lowpoly_character_ultratex.json",
+  "params": {
+    "tris": 12000,
+    "thin": 0.0,
+    "voxel_size": 0.0015,
+    "lowpoly_passes": 3
+  },
+  "retry": {"attempts": 1, "reseed": true, "add": {"thin": 0.3}}
+}

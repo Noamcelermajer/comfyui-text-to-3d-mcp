@@ -1,0 +1,17 @@
+﻿{
+  "id": "_qwen_image_base",
+  "abstract": true,
+  "kind": "image",
+  "graph": "../graphs/qwen_image_21_t2i.json",
+  "vram_group": "qwen_image",
+  "min_vram_gb": 12,
+  "params": {"width": 1024, "height": 1024, "steps": 25},
+  "set": {
+    "5.prompt": "{full_prompt}",
+    "6.width": "{width}",
+    "6.height": "{height}",
+    "7.seed": "{seed}",
+    "7.steps": "{steps}"
+  },
+  "outputs": {"image": {"node": "9", "input": "filename_prefix", "ext": ".png"}}
+}

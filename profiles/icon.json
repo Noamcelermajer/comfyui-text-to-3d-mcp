@@ -1,0 +1,8 @@
+{
+  "id": "icon",
+  "extends": "_qwen_image_base",
+  "title": "Game UI icon",
+  "description": "A square inventory / ability icon: one bold subject, strong silhouette, readable when small.",
+  "status": "experimental",
+  "prompt_template": "Game inventory icon of {prompt}. {style} One bold subject centered and filling the frame, strong clear silhouette, thick outlines, simple readable shapes, high contrast, readable at small size. Flat dark neutral background, no text, no border, no watermark."
+}

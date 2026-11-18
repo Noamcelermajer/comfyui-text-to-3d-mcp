@@ -1,0 +1,8 @@
+{
+  "id": "prop_hero",
+  "extends": "prop_lowpoly",
+  "title": "Hero prop",
+  "description": "A prop the camera gets close to: 8,000 triangles, otherwise the same pipeline as prop_lowpoly.",
+  "status": "experimental",
+  "params": {"tris": 8000, "lowpoly_passes": 4}
+}

@@ -1,0 +1,8 @@
+{
+  "id": "illustration",
+  "extends": "_qwen_image_base",
+  "title": "Free-form image",
+  "description": "Any picture: key art, backgrounds, loading screens, texture references. The prompt is used as written (plus the project style). Set width and height for other shapes, e.g. 1344 x 768.",
+  "status": "experimental",
+  "prompt_template": "{prompt}. {style}"
+}
