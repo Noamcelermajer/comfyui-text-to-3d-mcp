@@ -26,8 +26,8 @@
     "structure_steps": 12,
     "shape_steps": 20,
     "upsample_steps": 12,
-    "texture_steps": 4,
-    "texture_extra_steps": 4,
+    "texture_steps": 12,
+    "texture_extra_steps": 8,
     "normal_map_size": 2048
   },
   "param_help": {
@@ -41,7 +41,7 @@
     "components": "keep_all keeps separate parts; largest drops everything but the biggest piece",
     "wtivo_resolution": "grid of the watertight rebuild: 1024 is about twice as fast as 1536",
     "albedo_views": "colour views painted by the texture model: 6, 10 or 12",
-    "texture_steps": "sampling steps of the texture model; 4 is quick, 8-12 keeps more surface detail",
+    "texture_steps": "sampling steps of the texture model (UltraTex on FLUX.2 Klein base). Its own guidance is 25; 4 is a preview and loses surface detail. Time grows in proportion",
     "structure_steps": "sampling steps of the three shape stages (structure / shape / upsample)"
   },
   "set": {
@@ -98,7 +98,9 @@
   "seed_inputs": [
     "3.seed",
     "18.seed",
-    "23.seed"
+    "23.seed",
+    "358.seed",
+    "364.seed"
   ],
   "outputs": {
     "glb": {
@@ -142,15 +144,16 @@
   },
   "tiers": {
     "8": {
-      "params": {
+      "limits": {
         "tiled_decode": true,
         "clean_ram": true,
         "quad_resolution": 512,
-        "shape_resolution": 1024
+        "shape_resolution": 1024,
+        "wtivo_resolution": 1024
       }
     },
     "12": {
-      "params": {
+      "limits": {
         "tiled_decode": true,
         "quad_resolution": 1024,
         "shape_resolution": 1024
@@ -176,20 +179,22 @@
         "structure_steps": 8,
         "shape_steps": 12,
         "upsample_steps": 8,
-        "normal_map_size": 1024
+        "normal_map_size": 1024,
+        "texture_steps": 4,
+        "texture_extra_steps": 4
       },
       "image_params": {
         "steps": 12
       }
     },
     "max": {
-      "description": "Highest quality in one piece: full shape resolution, more triangles, more texture sampling.",
+      "description": "Highest quality in one piece: full shape resolution, 8,000 triangles, texture sampling at the texture model's recommended 25 steps.",
       "params": {
         "tris": 8000,
         "lowpoly_passes": 4,
         "shape_resolution": 1536,
-        "texture_steps": 10,
-        "texture_extra_steps": 10
+        "texture_steps": 25,
+        "texture_extra_steps": 16
       }
     }
   }

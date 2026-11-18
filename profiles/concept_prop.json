@@ -4,5 +4,5 @@
   "title": "Prop concept image",
   "description": "A single object on a plain white background, framed and lit so the 3D step can read it. Describe only the object: materials, colours, wear, proportions.",
   "status": "tested",
-  "prompt_template": "{prompt}. {style} A single object, the whole object visible and centered, filling about 80% of the frame, three-quarter front view from slightly above. Stylized 3D game asset render, chunky solid readable shapes, every part thick and sturdy, parts fused into one solid piece, no thin wires, no loose floating pieces, no see-through holes. Soft even studio lighting, no cast shadow, no ground, no text. Plain white background."
+  "prompt_template": "{prompt}. {style} Show its materials, colours and wear clearly. A single object, the whole object visible and centered, filling about 80% of the frame, three-quarter front view from slightly above. Stylized 3D game asset render, chunky solid readable shapes, every part thick and sturdy, parts fused into one solid piece, no thin wires, no loose floating pieces, no see-through holes. Soft even studio lighting, flat diffuse light, no cast shadows, no strong highlights or reflections, no ground, no text. Plain white background."
 }

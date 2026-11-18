@@ -51,15 +51,14 @@ asset is for, and say which one you used.
 | Preset | Use it for | Cost |
 | :--- | :--- | :--- |
 | `fast` | Blocking out, background clutter, distant or mobile assets: the lowest triangle count (about 800 for a prop, 4,000 for a character). | about 2 minutes |
-| `standard` | The default. 3,000-triangle props, 12,000-triangle characters. | 4-5 minutes |
-| `max` | Hero assets the camera gets close to. Props get full resolution and 8,000 triangles. Characters use split generation: the head is generated as its own model and fitted onto the body, which makes the face much sharper. | 10-15 minutes |
+| `standard` | The default. 3,000-triangle props, 12,000-triangle characters. | about 6-8 minutes |
+| `max` | Hero assets the camera gets close to: full shape resolution and the most texture detail (props 8,000 triangles). | longest; not yet measured |
 
-`max` on a character is experimental: check the preview for a lumpy hat or hair, texture
-speckles, or a misplaced head. The result reports `split.assembled` and `split.skipped`;
-if the head was skipped, you got the one-piece model. The one-piece body is always kept
-in `<name>_parts/base_one_piece.glb`.
+Standard and max times are estimates: the texture step count was raised and new timings
+have not been measured. On cards under 16 GB some settings are capped automatically; the
+result lists them under `limited_by_vram`.
 
-A different preset for the same name regenerates the model but reuses the concept image.
+Changing the preset or any parameter for the same name regenerates the model but reuses the concept image; identical settings return the cached result.
 
 ## Writing prompts
 

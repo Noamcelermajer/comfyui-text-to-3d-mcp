@@ -2,18 +2,27 @@
   "id": "isolate_head",
   "kind": "image_edit",
   "title": "Isolate a character's head",
-  "description": "Used by the max preset: takes a crop of a character and redraws only the head, hair or headwear, beard and neck on a white background, ready for its own 3D run.",
+  "description": "Experimental split generation (not used by any preset): takes a crop of a character and redraws only the head, hair or headwear, beard and neck on a white background, ready for its own 3D run.",
   "status": "experimental",
   "graph": "../graphs/qwen_image_21_edit.json",
   "vram_group": "qwen_image",
   "min_vram_gb": 12,
-  "params": {"steps": 25},
-  "prompt_template": "Edit this image. Show only the head of this character, isolated on a plain white background. Include the whole head exactly as in this image: the face, the ears, all of the hair, any hat, hood, helmet or other headwear, any beard at exactly the same length and width, and the neck down to where it meets the shoulders; the neck ends there in a clean cut. Remove the shoulders, the chest, the arms and the rest of the body completely. Keep the face exactly the same: the same features, skin colour, hair colour, wrinkles, scars and expression. Strict front view, face dead-on to the camera, no head tilt, the whole head and neck centred with an empty white margin around them. Same 3D render style, soft even studio light, sharp high detail. {prompt}",
+  "params": {
+    "steps": 25
+  },
+  "prompt_template": "Edit this image. Show only the head of this character, isolated on a plain white background. Include the whole head exactly as in this image: the face, the ears, all of the hair, any hat, hood, helmet or other headwear with exactly the same shape and size, any beard at exactly the same length and width, and the neck down to where it meets the shoulders; the neck ends there in a clean cut. Remove the shoulders, the chest, the arms and the rest of the body completely. Keep the face exactly the same: the same features, skin colour, hair colour, wrinkles, scars and expression. Keep exactly the same art style as this image, do not make it more realistic. Hair and beard are solid, smooth, sculpted clumps with clean edges, as on a game character model: no loose strands, no flyaway hairs, no gaps between strands. Headwear is thick and solid with clean, even edges. Strict front view, face dead-on to the camera, no head tilt, the whole head and neck centred with an empty white margin around them. Soft even studio light. {prompt}",
   "set": {
     "5.image": "{image_file}",
     "6.prompt": "{full_prompt}",
     "7.seed": "{seed}",
     "7.steps": "{steps}"
   },
-  "outputs": {"image": {"node": "9", "input": "filename_prefix", "ext": ".png"}}
+  "outputs": {
+    "image": {
+      "node": "9",
+      "input": "filename_prefix",
+      "ext": ".png"
+    }
+  },
+  "internal": true
 }

@@ -54,13 +54,31 @@ def _fill(value, ctx):
 def run_profile(profile, ctx, run_tag):
     """Apply the profile's `set` map to its graph, run it, and collect the outputs."""
     g = _load_graph(profile)
+    # Files the profile ships with (e.g. a pose reference) are copied into ComfyUI's input folder.
+    for key, rel in (profile.get("input_files") or {}).items():
+        src = os.path.normpath(os.path.join(profile.get("_dir", ""), rel))
+        if not os.path.isfile(src):
+            raise FileNotFoundError(f"profile '{profile['id']}' needs {src}")
+        ctx[key] = f"assetforge_{os.path.basename(src)}"
+        os.makedirs(comfy.input_dir(), exist_ok=True)
+        shutil.copyfile(src, os.path.join(comfy.input_dir(), ctx[key]))
     assignments = dict(profile.get("set", {}))
     for target in profile.get("seed_inputs", []):
         assignments[target] = "{seed}"
+    # Every target must exist: a setting that silently lands nowhere is worse than an error.
+    # A target can be marked optional with a leading "?" (e.g. "?325.resolution").
+    missing = []
     for target, value in assignments.items():
-        node, _, key = target.partition(".")
-        if node in g:  # a profile may name nodes that a variant graph does not have
-            g[node]["inputs"][key] = _fill(value, ctx)
+        optional = target.startswith("?")
+        node, _, key = target.lstrip("?").partition(".")
+        if node not in g or key not in g[node]["inputs"]:
+            if not optional:
+                missing.append(target if node in g else f"{target} (node {node} not in the graph)")
+            continue
+        g[node]["inputs"][key] = _fill(value, ctx)
+    if missing:
+        raise ValueError(f"profile '{profile['id']}' sets inputs its graph does not have: {', '.join(missing)}. "
+                         "The workflow or a node pack has changed; update the profile's `set` map.")
     blender = load_machine().get("blender") or "blender"
     for node in g.values():  # shipped workflows carry a neutral path
         if "blender_path" in node["inputs"]:
@@ -144,15 +162,24 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
     manifest_path = os.path.join(out, f"{name}.json")
     final_glb, concept = os.path.join(out, f"{name}.glb"), os.path.join(out, f"{name}.png")
 
+    # The cache key is everything that shapes the model; any change means a new run.
+    settings_key = json.dumps({"profile": profile_id, "preset": p["preset"], "params": p["params"],
+                               "seed": seed, "image": bool(image)}, sort_keys=True, default=str)
     if not force and not image_only and os.path.isfile(final_glb) and os.path.isfile(manifest_path):
         old = json.load(open(manifest_path, encoding="utf-8-sig"))
-        if old.get("preset", "standard") == p["preset"]:  # a different preset is a different asset
+        old_key = json.loads(old.get("settings_key", "{}"))
+        new_key = json.loads(settings_key)
+        if seed is None:  # no seed asked for: any earlier seed is fine
+            old_key.pop("seed", None); new_key.pop("seed", None)
+        if old_key == new_key:
             return {**old, "cached": True}
 
     comfy.ensure_server()
     seed = random.randrange(1, 2**31) if seed is None else int(seed)
     result = {"name": name, "profile": profile_id, "preset": p["preset"], "status": "error", "seed": seed,
-              "timings": {}, "attempts": []}
+              "settings_key": settings_key, "timings": {}, "attempts": []}
+    if p.get("limited_by_vram"):
+        result["limited_by_vram"] = p["limited_by_vram"]
 
     # Stage 1 - concept image: supplied, reused from an earlier image-only run, or generated.
     if image:

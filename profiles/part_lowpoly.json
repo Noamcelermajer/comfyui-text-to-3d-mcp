@@ -2,15 +2,21 @@
   "id": "part_lowpoly",
   "extends": "character_lowpoly",
   "title": "Character part",
-  "description": "One isolated part of a character (a head, a limb) as its own low-poly model. Used by the max preset; a part fills the whole grid, so it runs at shape resolution 1024 with the coarser rebuild grid.",
+  "description": "One isolated part of a character (a head, a limb) as its own low-poly model. Experimental split generation (not used by any preset); a part fills the whole grid, so it runs at shape resolution 1024 with the coarser rebuild grid.",
   "status": "experimental",
   "params": {
-    "tris": 4500,
-    "thin": 0.0,
+    "tris": 6000,
+    "thin": 0.4,
     "voxel_size": 0.005,
     "shape_resolution": 1024,
     "quad_resolution": 1024
   },
-  "presets": {"fast": null, "max": null},
-  "retry": {"attempts": 1, "reseed": true, "add": {"thin": 0.3}}
+  "retry": {
+    "attempts": 1,
+    "reseed": true,
+    "add": {
+      "thin": 0.3
+    }
+  },
+  "internal": true
 }

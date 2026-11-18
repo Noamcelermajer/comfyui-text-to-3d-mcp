@@ -2,10 +2,17 @@
 
 Settings are layered, later layers win:
   1. the profile file (and whatever it `extends`)
-  2. the profile's block for this machine's VRAM tier      ("tiers": {"8": {...}})
-     then the chosen preset - fast / standard / max        ("presets": {"fast": {...}})
-  3. the project's assetforge.json                          ("profiles": {"<id>": {...}})
-  4. the arguments of the call
+  2. defaults for this machine's VRAM tier                  ("tiers": {"24": {"params": {...}}})
+  3. the project's assetforge.json                          ("profiles": {"<id>": {"params": {...}}})
+  4. the chosen preset - fast / standard / max              ("presets": {"fast": {...}})
+     and the project's own block for that preset            ("profiles": {"<id>": {"presets": {"fast": {...}}}})
+  5. the arguments of the call
+  6. limits for this machine's VRAM tier, applied last so nothing above can exceed
+     what the card can run                                  ("tiers": {"8": {"limits": {...}}})
+     numbers are capped (min), `true` is forced, anything else is replaced.
+
+The preset comes after the project's general settings on purpose: a project that
+sets `tris` for a profile changes its standard result without flattening fast and max.
 
 Profiles are looked up in:  AssetForge/profiles, AssetForge/profiles/user,
 and <project>/assetforge_profiles (a project profile with the same id wins).
@@ -75,13 +82,31 @@ def resolve(pid, project_dir=None, params=None, preset=None):
             if key in preset_block:
                 p[key] = preset_block[key]
     p["preset"] = preset or "standard"
-    for layer in (tier_block, preset_block, proj_block):
+    proj_preset = ((proj_block.get("presets") or {}).get(p["preset"]) or {})
+    known = set(p.get("params", {}))
+    for name, layer in (("tier", tier_block), ("project", proj_block), ("preset", preset_block), ("project preset", proj_preset)):
+        bad = [k for k in layer.get("params", {}) if k not in known]
+        if bad:
+            raise ValueError(f"{name} settings for profile '{pid}' name unknown parameters {bad}. "
+                             f"It accepts: {', '.join(sorted(known))}")
         p["params"] = {**p.get("params", {}), **layer.get("params", {})}
         p["set"] = {**p.get("set", {}), **layer.get("set", {})}
     unknown = [k for k in (params or {}) if k not in p["params"]]
     if unknown:
         raise ValueError(f"profile '{pid}' has no parameter {unknown}. It accepts: {', '.join(sorted(p['params']))}")
     p["params"] = {**p["params"], **(params or {})}
+    p["limited_by_vram"] = {}
+    for k, cap in (tier_block.get("limits") or {}).items():
+        cur = p["params"].get(k)
+        if isinstance(cap, bool):
+            new = True if cap else cur
+        elif isinstance(cap, (int, float)) and isinstance(cur, (int, float)):
+            new = min(cur, cap)
+        else:
+            new = cap
+        if new != cur:
+            p["limited_by_vram"][k] = {"asked": cur, "used": new}
+            p["params"][k] = new
     p["style"] = project.get("style", "")
     return p
 
@@ -100,10 +125,10 @@ def list_profiles(project_dir=None):
     tier = str(load_machine()["tier"])
     out = []
     for pid in sorted(raw):
-        if raw[pid].get("abstract"):
+        if raw[pid].get("abstract") or raw[pid].get("internal"):
             continue
         p = _extended(pid, raw)
-        params = {**p.get("params", {}), **(p.get("tiers") or {}).get(tier, {}).get("params", {})}
+        params = resolve(pid, project_dir)["params"]
         out.append({"id": pid, "kind": p.get("kind"), "title": p.get("title", ""), "description": p.get("description", ""),
                     "status": p.get("status", "experimental"), "min_vram_gb": p.get("min_vram_gb", 0),
                     "params": params, "requires": p.get("requires", []),

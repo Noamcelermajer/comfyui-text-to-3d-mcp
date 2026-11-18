@@ -111,39 +111,35 @@ backed up once as `<file>.assetforge.bak`.
 Every asset profile takes a preset: `--preset fast|standard|max` on the command line,
 `"preset"` in an MCP call or a batch job.
 
-| Preset | What it does | Prop (measured) | Character (measured) |
+| Preset | What it does | Prop | Character |
 | :--- | :--- | :--- | :--- |
-| `fast` | Lowest triangle count, coarser grids, fewer sampling steps and texture views. For blocking out, background clutter, mobile. | 800 triangles, 2.2 min | 4,000 triangles, not yet measured |
-| `standard` | The profile's tuned defaults. | 3,000 triangles, 4.4 min | 12,000 triangles, 4 min |
-| `max` | Props: full shape resolution, 8,000 triangles, more texture sampling. **Characters: split generation** - the body is built at full resolution, the head is isolated by the image model and built as its own model, then scaled, placed and joined onto the body automatically. | 8,000 triangles, not yet measured | about 15,700 triangles, 12.5 min |
+| `fast` | Lowest triangle count, coarser grids, fewer sampling steps, 6 texture views, texture model at 4 steps. For blocking out, background clutter, mobile. | 800 triangles, 2.2 min (measured) | 4,000 triangles |
+| `standard` | The profile's tuned defaults; texture model at 12 steps. | 3,000 triangles | 12,000 triangles |
+| `max` | Full shape resolution and the texture model at its recommended 25 steps. One piece. | 8,000 triangles | 12,000 triangles |
 
-Timings are the 3D stage on an RTX 5080.
+The standard texture setting was raised from 4 to 12 steps after an audit found 4 is a
+preview setting that loses surface detail; texture time grows in proportion, so expect
+roughly 2-3 more minutes per asset than the 4.4 min prop / 4 min character measured at
+4 steps. New timings for 12 and 25 steps have not been measured yet. The texture seed now
+follows the run seed, so a retry or a new seed also repaints the texture.
 
-Standard (left pair) against max (right pair) on the same concept image:
+An earlier `max` for characters generated the head separately and fitted it onto the
+body. It measured slower (12-16 min) and looked worse than `standard` - the image model
+redraws the head in a different style and the separate head's texture is fragmented - so
+it was retired. The code (`assetforge/split.py`, the `isolate_head` and `part_lowpoly`
+profiles) is kept for experiments but no preset uses it.
 
-![standard vs max head](docs/preset_standard_vs_max_head.png)
-
-What split generation buys and costs, from that test: the face is far sharper (eyes,
-brow and wrinkles are readable) and the head sits on the body with no visible seam from
-the front. The hat came out lumpier than in the one-piece model and the texture has dark
-speckles in the beard, so `max` is marked experimental - look at the preview before
-keeping it. The one-piece body is kept in `<name>_parts/base_one_piece.glb`, and if a
-part fails its mesh check or cannot be fitted, the one-piece model is returned instead.
-
-The result is one `.glb` with two meshes (`body`, `head`) and two materials. Only the
-head is split today; parts are declared in the profile (`presets.max.split.parts`) and
-each needs a region finder and an attach routine in `assetforge/split.py`, so limbs or
-accessories can be added the same way.
-
-## Customising - four levels
+## Customising - five levels
 
 Later levels override earlier ones.
 
 1. **Profile** (`profiles/*.json`) - one way of making something: which graph to run,
    its parameters and defaults, the prompt template, retry rules.
-2. **Hardware tier** - a profile's `tiers` block for 8 / 12 / 16 / 24 GB cards. The tier
-   is detected by `doctor` and stored in `machine.json`. The chosen **preset** (`presets`
-   block) is applied next.
+2. **Hardware tier** - a profile's `tiers` block for 8 / 12 / 16 / 24 GB cards, detected by
+   `doctor` and stored in `machine.json`. `params` there are defaults (big cards get higher
+   ones); `limits` are applied last, after every other layer, so no preset, project or call
+   can ask a small card for more than it can run. A result says what was limited
+   (`limited_by_vram`).
 3. **Project** (`<game>/assetforge.json`, created by `forge.py init <game>`):
 
    ```json
@@ -158,7 +154,11 @@ Later levels override earlier ones.
    ```
 
    A project can also carry its own profiles in `<game>/assetforge_profiles/*.json`.
-4. **Call** - `--set tris=5000` on the command line, or `params` in an MCP call.
+   Project settings apply before the preset, so a project `tris` changes `standard`
+   without flattening `fast` and `max`; to change a preset for one project use
+   `"profiles": {"prop_lowpoly": {"presets": {"fast": {"params": {...}}}}}`.
+4. **Preset** - `fast`, `standard` or `max`.
+5. **Call** - `--set tris=5000` on the command line, or `params` in an MCP call.
 
 ### Writing a profile
 
@@ -181,7 +181,7 @@ A full profile has these parts:
 | `kind` | `image` or `asset`. |
 | `graph` | A ComfyUI workflow, either saved from the editor or exported in API format. Path is relative to the profile file. |
 | `params` | The tunable values and their defaults. Only these can be overridden. |
-| `set` | `"<node id>.<input>": value` - what to write into the graph. `"{tris}"` inserts a parameter; `{image_file}`, `{seed}`, `{full_prompt}`, `{blender}` are provided. |
+| `set` | `"<node id>.<input>": value` - what to write into the graph. Every target must exist in the graph or the run stops with an error naming it; prefix a target with `?` to make it optional. `"{tris}"` inserts a parameter; `{image_file}`, `{seed}`, `{full_prompt}`, `{blender}` are provided. |
 | `seed_inputs` | Graph inputs that receive the seed. |
 | `outputs` | Which save nodes produce which files (`node`, `ext`; `"keep": false` to discard). |
 | `prompt_template` | Image profiles: wraps the user's prompt. `{prompt}` and `{style}` are filled in. |

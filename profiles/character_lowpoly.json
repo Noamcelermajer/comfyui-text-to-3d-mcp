@@ -21,33 +21,20 @@
   },
   "presets": {
     "fast": {
+      "description": "Quickest usable character: 4,000 triangles, coarser grids, fewer sampling steps.",
       "params": {
         "tris": 4000,
         "lowpoly_passes": 4
       }
     },
     "max": {
-      "description": "Split generation: the body is built at full resolution, the head is isolated and built on its own so the face gets a whole model's worth of detail, and the two are fitted together automatically.",
+      "description": "Highest quality in one piece: full shape resolution and texture sampling at 25 steps.",
       "params": {
         "tris": 12000,
         "lowpoly_passes": 3,
         "shape_resolution": 1536,
-        "texture_steps": 8,
-        "texture_extra_steps": 8
-      },
-      "split": {
-        "parts": [
-          {
-            "id": "head",
-            "isolate_profile": "isolate_head",
-            "part_profile": "part_lowpoly",
-            "params": {
-              "tris": 4500,
-              "texture_steps": 8,
-              "texture_extra_steps": 8
-            }
-          }
-        ]
+        "texture_steps": 25,
+        "texture_extra_steps": 16
       }
     }
   }
