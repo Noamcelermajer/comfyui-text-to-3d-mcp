@@ -4,10 +4,10 @@ Paste this into any coding agent (Claude Code, Codex, or another agent that can 
 commands) on the machine with the GPU. It needs no further input from you.
 
 ```text
-Install Asset Forge from https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp on this machine.
+Install Asset Forge from https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp on this machine.
 
 Read AGENTS.md in that repository
-(https://raw.githubusercontent.com/Noamcelermajer/text-to-3d-game-asset-mcp/main/AGENTS.md)
+(https://raw.githubusercontent.com/Noamcelermajer/comfyui-text-to-3d-mcp/main/AGENTS.md)
 and follow its "Install (unattended)" section from start to finish: clone, run
 `python forge.py setup` and act on its JSON answer until it reports "ok", verify with
 `python forge.py doctor`, register the MCP server and skill with `python forge.py connect`,

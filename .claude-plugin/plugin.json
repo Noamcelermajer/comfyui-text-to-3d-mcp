@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Local text-to-image and text-to-3D game asset generation on your own GPU (ComfyUI): concept art, icons, and game-ready .glb models with PBR textures, mesh checks and preview renders.",
   "author": {"name": "Noamcelermajer"},
-  "homepage": "https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp",
-  "repository": "https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp",
+  "homepage": "https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp",
+  "repository": "https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp",
   "license": "MIT",
   "keywords": ["mcp", "comfyui", "text-to-3d", "game-assets", "image-generation", "3d", "skill"]
 }

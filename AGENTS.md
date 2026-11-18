@@ -28,8 +28,8 @@ Run the steps in order. Each one is safe to repeat; anything already present is 
 ### 1. Clone
 
 ```
-git clone https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp
-cd text-to-3d-game-asset-mcp
+git clone https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp
+cd comfyui-text-to-3d-mcp
 ```
 
 Use any Python 3.10+ to run `forge.py`. It hands over to ComfyUI's own Python where needed.

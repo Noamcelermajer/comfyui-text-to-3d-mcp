@@ -1,13 +1,39 @@
-# Asset Forge - text to image to game-ready 3D, as an MCP server and agent skill
+# Asset Forge - local text-to-3D game assets for Claude, Codex and any MCP client
 
-Generate game art **locally and for free on your own GPU**, from a coding agent or the
-command line: concept images, icons, illustrations, and game-ready 3D models (`.glb`
-with a baked normal map and PBR textures) from a text prompt or a picture.
+**Turn a sentence into a game-ready 3D model on your own GPU.** Free, private and offline:
+concept art, icons and low-poly `.glb` models with PBR textures, generated through ComfyUI
+and driven by your coding agent or the command line.
 
-Asset Forge drives [ComfyUI](https://github.com/comfyanonymous/ComfyUI) and wraps it in
-the things an agent needs: one call per asset, background jobs, an automatic mesh check
-with retry, a rendered preview the agent can look at, and settings that live in plain
-JSON files instead of in a node graph.
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![MCP server](https://img.shields.io/badge/MCP-server-blueviolet)](https://modelcontextprotocol.io)
+[![Agent skill](https://img.shields.io/badge/Agent%20Skill-SKILL.md-orange)](skills/asset-forge/SKILL.md)
+[![ComfyUI](https://img.shields.io/badge/ComfyUI-0.45%2B-informational)](https://github.com/comfyanonymous/ComfyUI)
+[![GitHub stars](https://img.shields.io/github/stars/Noamcelermajer/comfyui-text-to-3d-mcp?style=social)](https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp/stargazers)
+
+![Asset Forge: text to image to game-ready 3D](docs/banner.png)
+
+> "make a low-poly prop of a rusted iron key" &rarr; your agent generates the concept image,
+> builds the mesh, checks it for broken geometry, and shows you a render - about 2 minutes later.
+
+**Why Asset Forge**
+
+- **No credits, no cloud.** Hosted text-to-3D services charge about $0.30-0.80 per textured
+  model. This runs on your own NVIDIA card, as many times as you like.
+- **Built for agents.** An MCP server plus a skill: one call per asset, background jobs,
+  and a preview image the agent actually looks at before calling it done.
+- **Catches bad meshes.** A mesh check tuned on real failures (shattered thin parts,
+  needle spikes, flat sheets, blown triangle budgets) retries automatically.
+- **Fast / standard / max presets** from 800-triangle blockouts to full-resolution hero props.
+- **Swap models without code.** Each pipeline is a small JSON profile, so the next model
+  release is a new profile, not a rewrite.
+- **Hands-free install.** Paste [one prompt](SETUP_PROMPT.md) into an agent and it installs
+  every dependency and runs a test asset.
+
+If it saves you a subscription, a star helps other game developers find it.
+
+## How it works
+
+ComfyUI does the heavy lifting; Asset Forge wraps it in the things an agent needs.
 
 ```
 text ──► image profile ──► picture ──► asset profile ──► .glb ──► mesh check ──► preview render
@@ -18,7 +44,8 @@ text ──► image profile ──► picture ──► asset profile ──►
 | ![prop](docs/example_prop_brazier.png) | ![character](docs/example_character.png) |
 | `prop_lowpoly` - 2,996 triangles - 5.4 min | `character_lowpoly` - 11,997 triangles - 4.2 min |
 
-Timings are from an RTX 5080 (16 GB), the only hardware this has been measured on.
+Timings are from an RTX 5080 (16 GB), the only hardware this has been measured on, with
+the texture model at 4 steps; the current standard preset uses 12 and takes longer.
 
 - **MCP server** - 7 tools (`list_profiles`, `generate_image`, `generate_asset`, `get_job`,
   `check_mesh`, `models`, `forge_status`), stdio, no dependencies of its own.
@@ -47,8 +74,8 @@ anything.
 **1. Get the code and install the dependencies**
 
 ```
-git clone https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp
-cd text-to-3d-game-asset-mcp
+git clone https://github.com/Noamcelermajer/comfyui-text-to-3d-mcp
+cd comfyui-text-to-3d-mcp
 python forge.py setup --dry-run     # what would be installed, and how many GB
 python forge.py setup               # node packs + models, skipping anything already present
 python forge.py doctor              # every profile should show "ready": true
@@ -65,7 +92,7 @@ parts that need numpy and trimesh.
 | Agent | How |
 | :--- | :--- |
 | Claude Code and Codex, one command | `python forge.py connect` - registers the MCP server and installs the skill for both. `--claude` / `--codex` for one, `--project <dir>` for a single project, `--remove` to undo, `--dry-run` to preview. |
-| Claude Code, as a plugin | `/plugin marketplace add Noamcelermajer/text-to-3d-game-asset-mcp` then `/plugin install asset-forge@asset-forge` |
+| Claude Code, as a plugin | `/plugin marketplace add Noamcelermajer/comfyui-text-to-3d-mcp` then `/plugin install asset-forge@asset-forge` |
 | Claude Desktop | `python forge.py bundle` builds `dist/asset-forge.mcpb`; install it from Settings > Extensions. |
 | Anything else that speaks MCP | Add the stdio server below to the client's config. |
 
@@ -247,3 +274,9 @@ To move Asset Forge to another machine: copy this folder, run `forge.py doctor`,
 MIT - see [LICENSE](LICENSE). The bundled workflows are from PixelArtistry (MIT); models
 and node packs are not included and keep their own licenses - see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Contributing
+
+Issues and pull requests are welcome - especially new profiles for new models, timings on
+other GPUs (8, 12 and 24 GB tiers are still unmeasured), and fixes for meshes the check
+misses. Open an issue with the prompt, the profile and the preview image.
