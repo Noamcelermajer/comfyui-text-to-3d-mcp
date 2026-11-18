@@ -41,6 +41,8 @@ Timings are from an RTX 5080 (16 GB), the only hardware this has been measured o
 
 ## Install
 
+Short on time? [SETUP_PROMPT.md](SETUP_PROMPT.md) is a prompt you can paste into a coding agent: it installs every dependency (ComfyUI, node packs, models), connects the MCP server and runs a test asset.
+
 **1. Get the code and point it at ComfyUI**
 
 ```
