@@ -10,7 +10,7 @@ import uuid
 
 from .config import FORGE_ROOT, load_machine, log
 
-WIDGET_TYPES = {"INT", "FLOAT", "STRING", "BOOLEAN", "COMBO", "COLOR", "LOAD_3D"}
+WIDGET_TYPES = {"INT", "FLOAT", "STRING", "BOOLEAN", "COMBO", "COLOR", "LOAD_3D", "COMFY_DYNAMICCOMBO_V3", "BOUNDING_BOX"}
 
 
 class ComfyError(RuntimeError):
@@ -227,5 +227,22 @@ def ui_to_api(wf, obj_info):
                 inputs[name] = linked[name]
             elif val is not None:
                 inputs[name] = val
+            # An option menu whose choice brings its own settings: the editor stores those
+            # settings' values right after the choice; the API wants them as "menu.setting".
+            if stype == "COMFY_DYNAMICCOMBO_V3":
+                option = next((o for o in meta.get("options", []) if o.get("key") == inputs.get(name)), None)
+                subs = [(k, v) for sec in ("required", "optional") for k, v in ((option or {}).get("inputs", {}).get(sec, {})).items()]
+                for sub, sub_spec in subs:
+                    sub_type = sub_spec[0] if isinstance(sub_spec, list) and sub_spec else None
+                    sub_meta = sub_spec[1] if isinstance(sub_spec, list) and len(sub_spec) > 1 and isinstance(sub_spec[1], dict) else {}
+                    key = f"{name}.{sub}"
+                    if key in linked:
+                        inputs[key] = linked[key]
+                    elif isinstance(sub_type, list) or sub_type in WIDGET_TYPES:
+                        if w < len(widgets):
+                            inputs[key] = widgets[w]
+                            w += 1
+                        elif "default" in sub_meta:
+                            inputs[key] = sub_meta["default"]
         api[nid] = {"class_type": ntype, "inputs": inputs}
     return api
