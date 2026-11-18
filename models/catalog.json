@@ -1,52 +1,142 @@
 {
   "_about": "Model files Asset Forge knows how to fetch, keyed by file name. A profile's needs are read from its graph automatically; this file only supplies where each file lives and where to download it. To support a new model: add its files here, drop its workflow in workflows/, and write a profile that points at it.",
-
   "files": {
-    "qwen_image_2.1_int8_convrot.safetensors": {"folder": "diffusion_models", "size_gb": 6.8, "role": "text-to-image model (Qwen-Image 2.1, int8)",
-      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors"},
-    "qwen3vl_8b_int8_convrot.safetensors": {"folder": "text_encoders", "size_gb": 8.7, "role": "text encoder for Qwen-Image 2.1",
-      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_int8_convrot.safetensors"},
-    "qwen_image_2.1_vae_bf16.safetensors": {"folder": "vae", "size_gb": 0.6, "role": "VAE for Qwen-Image 2.1",
-      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors"},
-
-    "trellis_2_int8_convrot.safetensors": {"folder": "diffusion_models", "size_gb": 4.9, "role": "image-to-3D shape model (TRELLIS.2, int8)",
-      "url": "https://huggingface.co/Comfy-Org/TRELLIS.2/resolve/main/diffusion_models/trellis_2_int8_convrot.safetensors"},
-    "trellis_2_shape_vae_bf16.safetensors": {"folder": "vae", "size_gb": 1.0, "role": "TRELLIS.2 shape VAE",
-      "url": "https://huggingface.co/Comfy-Org/TRELLIS.2/resolve/main/vae/trellis_2_shape_vae_bf16.safetensors"},
-    "trellis_2_texture_vae_bf16.safetensors": {"folder": "vae", "size_gb": 0.9, "role": "TRELLIS.2 texture VAE",
-      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/vae/trellis_2_texture_vae_bf16.safetensors"},
-    "pixal3d_int8_convrot.safetensors": {"folder": "diffusion_models", "size_gb": 5.2, "role": "image-to-3D shape model (Pixal3D, int8) - alternative to TRELLIS.2",
-      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/diffusion_models/pixal3d_int8_convrot.safetensors"},
-    "pixal3d_multiview_int8_convrot.safetensors": {"folder": "diffusion_models", "size_gb": 5.2, "role": "Pixal3D multi-view variant (4-view turnaround input)",
-      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/diffusion_models/pixal3d_multiview_int8_convrot.safetensors"},
-    "dino_v3_L_naf_fp32.safetensors": {"folder": "clip_vision", "size_gb": 1.1, "role": "image encoder for the 3D shape models",
-      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/clip_vision/dino_v3_L_naf_fp32.safetensors"},
-    "moge_2_vitl_normal_fp16.safetensors": {"folder": "geometry_estimation", "size_gb": 0.6, "role": "camera / depth estimate used by Pixal3D",
-      "url": "https://huggingface.co/Comfy-Org/MoGe/resolve/main/geometry_estimation/moge_2_vitl_normal_fp16.safetensors"},
-    "birefnet.safetensors": {"folder": "background_removal", "size_gb": 0.4, "role": "background removal",
-      "url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors"},
-
-    "flux-2-klein-base-9b-Q4_0.gguf": {"folder": "diffusion_models", "size_gb": 5.2, "role": "texture painter backbone (FLUX.2 Klein 9B, Q4)",
-      "url": "https://huggingface.co/unsloth/FLUX.2-klein-base-9B-GGUF/resolve/main/flux-2-klein-base-9b-Q4_0.gguf"},
-    "Qwen3-8B-Q4_K_M.gguf": {"folder": "text_encoders", "size_gb": 4.7, "role": "text encoder for the texture painter (smaller)",
-      "url": "https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf"},
-    "Qwen3-8B-Q6_K.gguf": {"folder": "text_encoders", "size_gb": 6.3, "role": "text encoder for the texture painter (higher quality)",
-      "url": "https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q6_K.gguf"},
-    "qwen_3_8b_fp8mixed.safetensors": {"folder": "text_encoders", "size_gb": null, "role": "text encoder for the texture painter (largest, for 24 GB cards)",
-      "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors"},
-    "flux2-vae.safetensors": {"folder": "vae", "size_gb": 0.3, "role": "VAE for FLUX.2",
-      "url": "https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors"},
-    "ultratex_flux2.safetensors": {"folder": "loras", "size_gb": 0.4, "role": "UltraTex colour-texture LoRA",
-      "url": null, "note": "Fetched by the UltraTex node pack (ModelScope: Yibo-Zhang/UltraTex, flux2/lora/dit_lora.safetensors). No direct link recorded."},
-    "ultratex_flux2_mr.safetensors": {"folder": "loras", "size_gb": 0.4, "role": "UltraTex metallic/roughness LoRA",
-      "url": null, "note": "Fetched by the UltraTex node pack (ModelScope: Yibo-Zhang/UltraTex, flux2_mr/lora/dit_lora.safetensors). No direct link recorded."},
-    "ultratex_flux2_decoder.pt": {"folder": "ultratex", "size_gb": 0.1, "role": "UltraTex decoder",
-      "url": null, "note": "Fetched by the UltraTex node pack (ModelScope: Yibo-Zhang/UltraTex, flux2/decoder.pt). No direct link recorded."},
-
-    "hi3d_v1.safetensors": {"folder": "checkpoints", "size_gb": 7.2, "role": "optional geometry refiner (AeroX Hi3D, fp16) - not used by the built-in profiles",
-      "url": "https://huggingface.co/Aero-Ex/ComfyUI-Hi3D/resolve/10e577aabc5c3c748f56b1fcc91178f581039312/checkpoints/hi3d_v1.safetensors"}
+    "qwen_image_2.1_int8_convrot.safetensors": {
+      "folder": "diffusion_models",
+      "size_gb": 6.8,
+      "role": "text-to-image model (Qwen-Image 2.1, int8)",
+      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors"
+    },
+    "qwen3vl_8b_int8_convrot.safetensors": {
+      "folder": "text_encoders",
+      "size_gb": 8.7,
+      "role": "text encoder for Qwen-Image 2.1",
+      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/text_encoders/qwen3vl_8b_int8_convrot.safetensors"
+    },
+    "qwen_image_2.1_vae_bf16.safetensors": {
+      "folder": "vae",
+      "size_gb": 0.6,
+      "role": "VAE for Qwen-Image 2.1",
+      "url": "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/resolve/main/vae/qwen_image_2.1_vae_bf16.safetensors"
+    },
+    "trellis_2_int8_convrot.safetensors": {
+      "folder": "diffusion_models",
+      "size_gb": 4.9,
+      "role": "image-to-3D shape model (TRELLIS.2, int8)",
+      "url": "https://huggingface.co/Comfy-Org/TRELLIS.2/resolve/main/diffusion_models/trellis_2_int8_convrot.safetensors"
+    },
+    "trellis_2_shape_vae_bf16.safetensors": {
+      "folder": "vae",
+      "size_gb": 1.0,
+      "role": "TRELLIS.2 shape VAE",
+      "url": "https://huggingface.co/Comfy-Org/TRELLIS.2/resolve/main/vae/trellis_2_shape_vae_bf16.safetensors"
+    },
+    "trellis_2_texture_vae_bf16.safetensors": {
+      "folder": "vae",
+      "size_gb": 0.9,
+      "role": "TRELLIS.2 texture VAE",
+      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/vae/trellis_2_texture_vae_bf16.safetensors"
+    },
+    "pixal3d_int8_convrot.safetensors": {
+      "folder": "diffusion_models",
+      "size_gb": 5.2,
+      "role": "image-to-3D shape model (Pixal3D, int8) - alternative to TRELLIS.2",
+      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/diffusion_models/pixal3d_int8_convrot.safetensors"
+    },
+    "pixal3d_multiview_int8_convrot.safetensors": {
+      "folder": "diffusion_models",
+      "size_gb": 5.2,
+      "role": "Pixal3D multi-view variant (4-view turnaround input)",
+      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/diffusion_models/pixal3d_multiview_int8_convrot.safetensors"
+    },
+    "dino_v3_L_naf_fp32.safetensors": {
+      "folder": "clip_vision",
+      "size_gb": 1.1,
+      "role": "image encoder for the 3D shape models",
+      "url": "https://huggingface.co/Comfy-Org/Pixal3D/resolve/main/clip_vision/dino_v3_L_naf_fp32.safetensors"
+    },
+    "moge_2_vitl_normal_fp16.safetensors": {
+      "folder": "geometry_estimation",
+      "size_gb": 0.6,
+      "role": "camera / depth estimate used by Pixal3D",
+      "url": "https://huggingface.co/Comfy-Org/MoGe/resolve/main/geometry_estimation/moge_2_vitl_normal_fp16.safetensors"
+    },
+    "birefnet.safetensors": {
+      "folder": "background_removal",
+      "size_gb": 0.4,
+      "role": "background removal",
+      "url": "https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors"
+    },
+    "flux-2-klein-base-9b-Q4_0.gguf": {
+      "folder": "diffusion_models",
+      "size_gb": 5.2,
+      "role": "texture painter backbone (FLUX.2 Klein 9B, Q4)",
+      "url": "https://huggingface.co/unsloth/FLUX.2-klein-base-9B-GGUF/resolve/main/flux-2-klein-base-9b-Q4_0.gguf"
+    },
+    "Qwen3-8B-Q4_K_M.gguf": {
+      "folder": "text_encoders",
+      "size_gb": 4.7,
+      "role": "text encoder for the texture painter (smaller)",
+      "url": "https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf"
+    },
+    "Qwen3-8B-Q6_K.gguf": {
+      "folder": "text_encoders",
+      "size_gb": 6.3,
+      "role": "text encoder for the texture painter (higher quality)",
+      "url": "https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q6_K.gguf"
+    },
+    "qwen_3_8b_fp8mixed.safetensors": {
+      "folder": "text_encoders",
+      "size_gb": null,
+      "role": "text encoder for the texture painter (largest, for 24 GB cards)",
+      "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors"
+    },
+    "flux2-vae.safetensors": {
+      "folder": "vae",
+      "size_gb": 0.3,
+      "role": "VAE for FLUX.2",
+      "url": "https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors"
+    },
+    "ultratex_flux2.safetensors": {
+      "folder": "loras",
+      "size_gb": 0.4,
+      "role": "UltraTex colour-texture LoRA",
+      "url": null,
+      "note": "Downloaded from ModelScope (Yibo-Zhang/UltraTex) and renamed; `forge.py setup` does this.",
+      "modelscope": {
+        "model": "Yibo-Zhang/UltraTex",
+        "file": "flux2/lora/dit_lora.safetensors"
+      }
+    },
+    "ultratex_flux2_mr.safetensors": {
+      "folder": "loras",
+      "size_gb": 0.4,
+      "role": "UltraTex metallic/roughness LoRA",
+      "url": null,
+      "note": "Downloaded from ModelScope (Yibo-Zhang/UltraTex) and renamed; `forge.py setup` does this.",
+      "modelscope": {
+        "model": "Yibo-Zhang/UltraTex",
+        "file": "flux2_mr/lora/dit_lora.safetensors"
+      }
+    },
+    "ultratex_flux2_decoder.pt": {
+      "folder": "ultratex",
+      "size_gb": 0.1,
+      "role": "UltraTex decoder",
+      "url": null,
+      "note": "Downloaded from ModelScope (Yibo-Zhang/UltraTex) and renamed; `forge.py setup` does this.",
+      "modelscope": {
+        "model": "Yibo-Zhang/UltraTex",
+        "file": "flux2/decoder.pt"
+      }
+    },
+    "hi3d_v1.safetensors": {
+      "folder": "checkpoints",
+      "size_gb": 7.2,
+      "role": "optional geometry refiner (AeroX Hi3D, fp16) - not used by the built-in profiles",
+      "url": "https://huggingface.co/Aero-Ex/ComfyUI-Hi3D/resolve/10e577aabc5c3c748f56b1fcc91178f581039312/checkpoints/hi3d_v1.safetensors"
+    }
   },
-
   "hardware_guide": {
     "_about": "Only the 16 GB column has been measured (RTX 5080). The other tiers are starting points taken from how the original workflows were tuned for small cards; verify on the actual machine.",
     "8": {
@@ -72,6 +162,76 @@
       "profiles": "Quad resolution 1536 is enabled automatically. Try prop_hero / higher triangle budgets.",
       "models": "The fp8mixed text encoder (qwen_3_8b_fp8mixed.safetensors) and non-quantised diffusion models become practical; add them as new profiles.",
       "measured": false
+    }
+  },
+  "node_packs": [
+    {
+      "folder": "ComfyUI-GGUF",
+      "url": "https://github.com/city96/ComfyUI-GGUF",
+      "tested_commit": "4dfc025",
+      "provides": "GGUF model loaders"
+    },
+    {
+      "folder": "comfyui_ultratex_modular",
+      "url": "https://github.com/Mstafa-awad/UltraTex-ComfyUI-nodes",
+      "tested_commit": "4dea3ff",
+      "provides": "UltraTex PBR texture painting",
+      "extra_pip": [
+        "gguf>=0.13"
+      ]
+    },
+    {
+      "folder": "WTiVo-WatertightVoxel-ComfyuiNode",
+      "url": "https://github.com/Mstafa-awad/WTiVo-WatertightVoxel-ComfyuiNode",
+      "tested_commit": "fb9e9ea",
+      "provides": "watertight mesh rebuild"
+    },
+    {
+      "folder": "WTiVo-FastMergeByDistance",
+      "url": "https://github.com/Mstafa-awad/WTiVo-FastMergeByDistance",
+      "tested_commit": "5392949",
+      "provides": "seam welding"
+    },
+    {
+      "folder": "LODTailor-The-Mesh-Trimmer-ComfyuiNode",
+      "url": "https://github.com/Mstafa-awad/LODTailor-The-Mesh-Trimmer-ComfyuiNode",
+      "tested_commit": "3d25b7d",
+      "provides": "low-poly decimation (uses Blender)"
+    },
+    {
+      "folder": "LODTailor-Bake-Forger",
+      "url": "https://github.com/Mstafa-awad/LODTailor-Bake-Forger",
+      "tested_commit": "f13589c",
+      "provides": "normal-map baking (uses Blender)"
+    },
+    {
+      "folder": "ComfyUI-Mesh-Quad-Reconstruct",
+      "url": "https://github.com/Mstafa-awad/ComfyUI-Mesh-Quad-Reconstruct",
+      "tested_commit": "74048b3",
+      "provides": "quad reconstruction (ships cumesh wheels)"
+    },
+    {
+      "folder": "ComfyUI-CuMesh-Decimate",
+      "url": "https://github.com/Mstafa-awad/ComfyUI-CuMesh-Decimate",
+      "tested_commit": "c4edeb9",
+      "provides": "GPU decimation (ships cumesh wheels)"
+    },
+    {
+      "folder": "ComfyUI-Memory-Cleaner",
+      "url": "https://github.com/Mstafa-awad/ComfyUI-Memory-Cleaner",
+      "tested_commit": "3357282",
+      "provides": "VRAM clean-up between stages"
+    }
+  ],
+  "base_software": {
+    "comfyui": {
+      "min_version": "0.45",
+      "tested": "0.45.0, Python 3.12, torch 2.8.0+cu128",
+      "repo": "https://github.com/comfyanonymous/ComfyUI"
+    },
+    "blender": {
+      "min_version": "4.0",
+      "tested": "5.3"
     }
   }
 }

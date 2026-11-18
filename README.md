@@ -30,32 +30,35 @@ Timings are from an RTX 5080 (16 GB), the only hardware this has been measured o
 
 ## Requirements
 
-- A working **ComfyUI** with an NVIDIA GPU (8 GB minimum, 16 GB recommended).
-- **Blender** 4.x or newer (low-poly clean-up, normal baking, previews).
-- The node packs and models the bundled workflows use. The quickest route is the
-  installer from [PixelArtistry-Animated-Characters](https://github.com/pixelartistry/PixelArtistry-Animated-Characters)
-  plus the UltraTex and ComfyUI-GGUF node packs, and Qwen-Image 2.1 for text-to-image.
-  You do not have to work the list out by hand: `forge.py doctor` reads every workflow
-  and reports the node types and model files that are missing, and `forge.py models`
-  gives download links.
+- An NVIDIA GPU with at least 8 GB of VRAM (16 GB recommended) and about 70 GB of free disk.
+- **ComfyUI** 0.45 or newer and **Blender** 4.0 or newer. Existing installs are reused.
+- Everything else - nine ComfyUI node packs, their Python packages and about 45 GB of
+  model weights - is installed by `forge.py setup`.
 
 ## Install
 
-Short on time? [SETUP_PROMPT.md](SETUP_PROMPT.md) is a prompt you can paste into a coding agent: it installs every dependency (ComfyUI, node packs, models), connects the MCP server and runs a test asset.
+**The no-hands route:** paste the prompt in [SETUP_PROMPT.md](SETUP_PROMPT.md) into a
+coding agent. It points the agent at [AGENTS.md](AGENTS.md), which is written so an AI
+can install everything, connect the MCP server and run a test asset without asking you
+anything.
 
-**1. Get the code and point it at ComfyUI**
+**By hand:**
+
+**1. Get the code and install the dependencies**
 
 ```
 git clone https://github.com/Noamcelermajer/text-to-3d-game-asset-mcp
 cd text-to-3d-game-asset-mcp
-python forge.py doctor
+python forge.py setup --dry-run     # what would be installed, and how many GB
+python forge.py setup               # node packs + models, skipping anything already present
+python forge.py doctor              # every profile should show "ready": true
 ```
 
-`doctor` finds ComfyUI when the folder sits next to or inside it. Otherwise set the
-`ASSETFORGE_COMFY` environment variable to the ComfyUI folder (the one with `main.py`)
-before the first run, or edit `comfy_root` in the `machine.json` it writes. Any Python 3.10+
-can start Asset Forge; it hands over to ComfyUI's own Python for the parts that need
-numpy and trimesh.
+`setup` finds ComfyUI when this folder sits next to or inside it. Otherwise set the
+`ASSETFORGE_COMFY` environment variable to the ComfyUI folder (the one with `main.py`).
+If ComfyUI or Blender is missing, `setup` stops and prints the commands to install it.
+Any Python 3.10+ can start Asset Forge; it hands over to ComfyUI's own Python for the
+parts that need numpy and trimesh.
 
 **2. Connect your agent** - pick one
 
@@ -75,6 +78,7 @@ numpy and trimesh.
 ## Command line
 
 ```
+python forge.py setup                                    install node packs and models, unattended
 python forge.py doctor                                   hardware, ComfyUI, Blender, model files
 python forge.py profiles                                 what can be generated
 python forge.py image  torch_icon "a burning torch" -p icon
@@ -183,6 +187,7 @@ starting points and are marked as unmeasured in the catalog.
 
 ```
 forge.py              command line and MCP entry point
+AGENTS.md             install and usage instructions written for AI agents
 machine.json          detected hardware and paths (edit to override)
 assetforge/           the engine (no dependencies beyond what ComfyUI ships)
 profiles/             built-in profiles;  profiles/user/ for your own

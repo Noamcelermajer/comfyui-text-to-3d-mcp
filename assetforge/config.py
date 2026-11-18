@@ -82,12 +82,19 @@ def find_blender():
 
 def detect_machine():
     comfy = find_comfy()
-    embedded = os.path.join(os.path.dirname(comfy), "python_embeded", "python.exe") if comfy else ""
+    embedded = ""
+    if comfy:  # portable build, then the usual virtual-environment locations
+        for cand in (os.path.join(os.path.dirname(comfy), "python_embeded", "python.exe"),
+                     os.path.join(comfy, "venv", "Scripts", "python.exe"), os.path.join(comfy, ".venv", "Scripts", "python.exe"),
+                     os.path.join(comfy, "venv", "bin", "python"), os.path.join(comfy, ".venv", "bin", "python")):
+            if os.path.isfile(cand):
+                embedded = cand
+                break
     gpu = detect_gpu()
     return {
         "comfy_root": comfy,
         "comfy_url": "http://127.0.0.1:8188",
-        "comfy_python": embedded if os.path.isfile(embedded) else sys.executable,
+        "comfy_python": embedded or sys.executable,
         "comfy_launch_args": ["--use-flash-attention", "--enable-triton-backend"],
         "blender": find_blender(),
         "gpu": gpu,
@@ -102,7 +109,10 @@ def load_machine(refresh=False):
     m = detect_machine()
     if os.path.isfile(MACHINE_FILE):  # keep hand edits, refresh only the detected hardware
         old = json.load(open(MACHINE_FILE, encoding="utf-8-sig"))
-        m = {**m, **{k: v for k, v in old.items() if k not in ("gpu", "ram_gb", "tier")}}
+        # keep hand edits, but an empty saved value never hides something now detected
+        m = {**m, **{k: v for k, v in old.items() if k not in ("gpu", "ram_gb", "tier") and v not in ("", None)}}
+        if old.get("comfy_root") in ("", None) and m["comfy_root"]:
+            m["comfy_python"] = detect_machine()["comfy_python"]
     json.dump(m, open(MACHINE_FILE, "w", encoding="utf-8"), indent=2)
     return m
 

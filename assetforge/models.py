@@ -79,12 +79,45 @@ def report(project_dir=None):
     }
 
 
+def _install_from_modelscope(name, meta):
+    """Some weights are only on ModelScope, under a generic file name: fetch with its
+    CLI (installed into ComfyUI's Python on first use) and store under the right name."""
+    import shutil
+    import subprocess
+    import tempfile
+
+    dst = os.path.join(models_dir(), meta["folder"], name)
+    if os.path.isfile(dst):
+        return {"file": name, "status": "already_installed", "path": dst}
+    py, src = load_machine()["comfy_python"], meta["modelscope"]
+    log(f"downloading {name} from ModelScope ({src['model']}) ...")
+    try:
+        if subprocess.run([py, "-c", "import modelscope"], capture_output=True).returncode != 0:
+            subprocess.run([py, "-m", "pip", "install", "modelscope"], capture_output=True, check=True, timeout=900)
+        with tempfile.TemporaryDirectory() as tmp:
+            r = subprocess.run([py, "-m", "modelscope.cli.cli", "download", "--model", src["model"], src["file"],
+                                "--local_dir", tmp], capture_output=True, text=True, timeout=7200)
+            got = os.path.join(tmp, *src["file"].split("/"))
+            if not os.path.isfile(got):
+                return {"file": name, "status": "error", "error": "ModelScope download failed: " + (r.stderr or r.stdout)[-400:],
+                        "manual": f"pip install modelscope; modelscope download --model {src['model']} {src['file']} "
+                                  f"--local_dir tmp; then copy tmp/{src['file']} to models/{meta['folder']}/{name}"}
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.move(got, dst)
+        return {"file": name, "status": "installed", "path": dst}
+    except Exception as e:
+        return {"file": name, "status": "error", "error": str(e)}
+
+
 def install(file_names):
     """Download catalog files into the ComfyUI models folder. Returns one result per file."""
     cat = catalog()["files"]
     results = []
     for name in file_names:
         meta = cat.get(name)
+        if meta and not meta.get("url") and meta.get("modelscope"):
+            results.append(_install_from_modelscope(name, meta))
+            continue
         if not meta or not meta.get("url"):
             results.append({"file": name, "status": "no_url", "note": (meta or {}).get("note", "not in the catalog")})
             continue

@@ -1,5 +1,6 @@
 r"""Asset Forge command line. Every command prints one JSON object on stdout.
 
+  forge.py setup [--dry-run]                   install node packs and models for this machine, unattended
   forge.py doctor                              detect hardware, check ComfyUI, Blender and model files
   forge.py profiles                            list profiles and their parameters
   forge.py image  NAME "prompt" [-p icon]      text -> image
@@ -47,6 +48,8 @@ def main():
         p.add_argument("--set", action="append", metavar="KEY=VALUE", help="override a profile parameter")
 
     sub.add_parser("doctor")
+    p = sub.add_parser("setup"); p.add_argument("--dry-run", action="store_true"); p.add_argument("--skip-models", action="store_true")
+    p.add_argument("--skip-nodes", action="store_true"); p.add_argument("--pinned", action="store_true"); p.add_argument("--all-profiles", action="store_true")
     p = sub.add_parser("profiles"); p.add_argument("--project")
     p = sub.add_parser("image"); p.add_argument("name"); p.add_argument("prompt"); p.add_argument("-p", "--profile", default="illustration"); common(p)
     p = sub.add_parser("asset"); p.add_argument("name"); p.add_argument("prompt", nargs="?"); p.add_argument("-p", "--profile", default="prop_lowpoly")
@@ -93,6 +96,9 @@ def main():
                     entry["missing_nodes"] = sorted(t for t in types if t not in info and t not in
                                                     ("Note", "MarkdownNote", "Reroute", "PrimitiveNode") and len(t) != 36)
                     entry["ready"] = entry["ready"] and not entry["missing_nodes"]
+        elif a.cmd == "setup":
+            from assetforge import setup as setup_mod
+            out = setup_mod.setup(a.dry_run, a.skip_models, a.skip_nodes, a.pinned, a.all_profiles)
         elif a.cmd == "profiles":
             out = {"status": "ok", "profiles": profiles.list_profiles(a.project)}
         elif a.cmd == "image":
@@ -123,7 +129,7 @@ def main():
         sys.exit(1)
 
     print(json.dumps(out, indent=1))
-    sys.exit(0 if out.get("status") in ("ok", "image_only") else 2)
+    sys.exit(0 if out.get("status") in ("ok", "image_only") else 3 if out.get("status") in ("blocked", "partial") else 2)
 
 
 if __name__ == "__main__":
