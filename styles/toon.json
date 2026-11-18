@@ -1,0 +1,10 @@
+{
+  "id": "toon",
+  "title": "Toon / cel",
+  "description": "Flat colour areas with clean edges. Small textures are enough; an engine toon shader does the shading.",
+  "concept": "Cel-shaded toon style, flat solid colour areas with clean edges, very little texture noise, bold simple forms, bright clear palette.",
+  "params": {
+    "texture_size": 1024
+  },
+  "status": "experimental"
+}

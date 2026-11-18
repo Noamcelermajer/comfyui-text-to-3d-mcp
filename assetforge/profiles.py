@@ -6,6 +6,8 @@ Settings are layered, later layers win:
   3. the project's assetforge.json                          ("profiles": {"<id>": {"params": {...}}})
   4. the chosen preset - fast / standard / max              ("presets": {"fast": {...}})
      and the project's own block for that preset            ("profiles": {"<id>": {"presets": {"fast": {...}}}})
+  4b. the style preset - realistic_pbr / hand_painted / ...  (styles/<id>.json "params")
+     only parameters the profile has are applied; the rest are reported as ignored
   5. the arguments of the call
   6. limits for this machine's VRAM tier, applied last so nothing above can exceed
      what the card can run                                  ("tiers": {"8": {"limits": {...}}})
@@ -64,7 +66,35 @@ def _extended(pid, raw, seen=()):
 PRESETS = ("fast", "standard", "max")
 
 
-def resolve(pid, project_dir=None, params=None, preset=None):
+def _style_dirs(project_dir=None):
+    dirs = [os.path.join(FORGE_ROOT, "styles"), os.path.join(FORGE_ROOT, "styles", "user")]
+    if project_dir:
+        dirs.append(os.path.join(project_dir, "assetforge_styles"))
+    return dirs
+
+
+def load_style(style_id, project_dir=None):
+    """A style preset: concept-prompt wording plus asset parameters. None = no style."""
+    if not style_id:
+        return None
+    for d in reversed(_style_dirs(project_dir)):  # a project style with the same id wins
+        path = os.path.join(d, f"{style_id}.json")
+        if os.path.isfile(path):
+            return json.load(open(path, encoding="utf-8-sig"))
+    raise KeyError(f"unknown style '{style_id}'. Known: {', '.join(s['id'] for s in list_styles(project_dir))}")
+
+
+def list_styles(project_dir=None):
+    found = {}
+    for d in _style_dirs(project_dir):
+        for path in sorted(glob.glob(os.path.join(d, "*.json"))):
+            st = json.load(open(path, encoding="utf-8-sig"))
+            found[st.get("id") or os.path.splitext(os.path.basename(path))[0]] = st
+    return [{"id": k, "title": v.get("title", ""), "description": v.get("description", ""),
+             "status": v.get("status", "experimental"), "sets": sorted(v.get("params", {}))} for k, v in sorted(found.items())]
+
+
+def resolve(pid, project_dir=None, params=None, preset=None, style=None):
     """Return the profile with every layer applied; `params` are the call's overrides."""
     raw = _raw_profiles(project_dir)
     p = _extended(pid, raw)
@@ -91,6 +121,19 @@ def resolve(pid, project_dir=None, params=None, preset=None):
                              f"It accepts: {', '.join(sorted(known))}")
         p["params"] = {**p.get("params", {}), **layer.get("params", {})}
         p["set"] = {**p.get("set", {}), **layer.get("set", {})}
+    project_style = project.get("style_preset")
+    st = load_style(style if style is not None else project_style, project_dir)
+    p["style_preset"] = st["id"] if st else None
+    p["style_text"] = st.get("concept", "") if st else ""
+    p["style_ignored"] = []
+    if st:
+        for k, v in (st.get("params") or {}).items():
+            if k in p["params"]:
+                p["params"][k] = v
+            else:
+                p["style_ignored"].append(k)
+        if st.get("voxel"):
+            p["voxel"] = st["voxel"]
     unknown = [k for k in (params or {}) if k not in p["params"]]
     if unknown:
         raise ValueError(f"profile '{pid}' has no parameter {unknown}. It accepts: {', '.join(sorted(p['params']))}")

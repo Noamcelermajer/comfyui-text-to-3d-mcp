@@ -1,0 +1,16 @@
+{
+  "id": "voxel",
+  "title": "Voxel",
+  "description": "Rebuilds the finished model as coloured cubes after generation (each cube takes the colour of the nearest point on the textured model).",
+  "concept": "Simple blocky forms, large flat colour areas, no fine detail.",
+  "params": {
+    "tris": 3000,
+    "postprocess": [
+      "voxelize"
+    ]
+  },
+  "voxel": {
+    "resolution": 32
+  },
+  "status": "experimental"
+}

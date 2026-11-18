@@ -1,0 +1,118 @@
+{
+  "id": "prop_native",
+  "kind": "asset",
+  "title": "Prop (native Pixal3D pipeline)",
+  "description": "Props through ComfyUI's built-in Pixal3D / TRELLIS.2 nodes only: shape, PBR texture, remesh, decimation to a triangle budget, UV unwrap, and baked colour, normal and AO maps. No custom node packs and no non-commercial texture weights.",
+  "status": "experimental",
+  "image_profile": "concept_prop_front",
+  "graph": "../workflows/native_image_to_3d.json",
+  "vram_group": "mesh",
+  "min_vram_gb": 12,
+  "params": {
+    "tris": 3000,
+    "trellis": false,
+    "remove_background": true,
+    "shape_resolution": 1024,
+    "remesh_resolution": 768,
+    "crease_angle": 180.0,
+    "texture_size": 2048,
+    "normal_map_size": 2048,
+    "ao_size": 1024,
+    "structure_steps": 12,
+    "shape_steps": 20,
+    "upsample_steps": 12,
+    "texture_steps": 12,
+    "postprocess": []
+  },
+  "param_help": {
+    "tris": "triangle budget of the final low-poly mesh (decimated from the remeshed shape; detail is baked into the normal map)",
+    "trellis": "false = Pixal3D (pixel-aligned to the picture; best with a straight-on view), true = TRELLIS.2",
+    "shape_resolution": "voxel resolution of the shape: 1024 to 2048 (1536 needs more VRAM and time)",
+    "remesh_resolution": "grid of the clean-up remesh before decimation (detail of the high-poly the maps are baked from)",
+    "crease_angle": "edges sharper than this stay hard: 180 = smooth everywhere, about 30 = faceted low-poly look",
+    "texture_size": "colour / metallic / roughness texture resolution",
+    "postprocess": "extra steps after generation, e.g. [\"voxelize\"] (set by the voxel style)"
+  },
+  "set": {
+    "122.image": "{image_file}",
+    "316.value": "{trellis}",
+    "248.switch": "{remove_background}",
+    "94.target_resolution": "{shape_resolution}",
+    "241.resolution": "{remesh_resolution}",
+    "186.target_face_count": "{tris}",
+    "238.crease_angle": "{crease_angle}",
+    "260.crease_angle": "{crease_angle}",
+    "288.value": "{texture_size}",
+    "224.resolution": "{normal_map_size}",
+    "233.resolution": "{ao_size}",
+    "3.steps": "{structure_steps}",
+    "18.steps": "{shape_steps}",
+    "23.steps": "{upsample_steps}",
+    "12.steps": "{texture_steps}"
+  },
+  "seed_inputs": [
+    "3.seed",
+    "12.seed",
+    "18.seed",
+    "23.seed"
+  ],
+  "outputs": {
+    "glb": {
+      "node": "322",
+      "ext": ".glb"
+    }
+  },
+  "primary_output": "glb",
+  "check": {
+    "enabled": true,
+    "target_param": "tris"
+  },
+  "retry": {
+    "attempts": 1,
+    "reseed": true,
+    "add": {}
+  },
+  "presets": {
+    "fast": {
+      "description": "Lowest triangle count and smaller maps.",
+      "params": {
+        "tris": 800,
+        "remesh_resolution": 512,
+        "texture_size": 1024,
+        "normal_map_size": 1024,
+        "ao_size": 512,
+        "structure_steps": 8,
+        "shape_steps": 12,
+        "upsample_steps": 8,
+        "texture_steps": 8
+      }
+    },
+    "max": {
+      "description": "Full shape resolution, 8,000 triangles, 4K colour maps.",
+      "params": {
+        "tris": 8000,
+        "shape_resolution": 1536,
+        "remesh_resolution": 1024,
+        "texture_size": 4096,
+        "normal_map_size": 4096
+      }
+    }
+  },
+  "tiers": {
+    "8": {
+      "limits": {
+        "shape_resolution": 1024,
+        "remesh_resolution": 512,
+        "texture_size": 1024,
+        "normal_map_size": 1024
+      }
+    },
+    "12": {
+      "limits": {
+        "shape_resolution": 1024,
+        "texture_size": 2048,
+        "normal_map_size": 2048
+      }
+    }
+  }
+}

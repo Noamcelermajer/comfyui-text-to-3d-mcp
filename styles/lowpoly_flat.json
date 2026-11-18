@@ -1,0 +1,14 @@
+{
+  "id": "lowpoly_flat",
+  "title": "Low-poly flat-shaded",
+  "description": "Large flat facets and a few colours per object: very low triangle counts and faceted normals.",
+  "concept": "Low-poly faceted style, large flat facets, a few plain colours per material, no fine detail, no texture noise, simple geometric forms.",
+  "params": {
+    "tris": 800,
+    "crease_angle": 30.0,
+    "texture_size": 512,
+    "normal_map_size": 512,
+    "remesh_resolution": 512
+  },
+  "status": "experimental"
+}

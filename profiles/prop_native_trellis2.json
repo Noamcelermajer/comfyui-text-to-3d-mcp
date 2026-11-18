@@ -1,0 +1,11 @@
+{
+  "id": "prop_native_trellis2",
+  "extends": "prop_native",
+  "title": "Prop (native TRELLIS.2 pipeline)",
+  "description": "The native built-in pipeline with TRELLIS.2 instead of Pixal3D, fed the three-quarter concept view TRELLIS.2 handles best.",
+  "status": "experimental",
+  "image_profile": "concept_prop",
+  "params": {
+    "trellis": true
+  }
+}

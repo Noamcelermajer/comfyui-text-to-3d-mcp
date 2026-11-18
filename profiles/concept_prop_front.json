@@ -1,0 +1,8 @@
+{
+  "id": "concept_prop_front",
+  "extends": "_qwen_image_base",
+  "title": "Prop concept image, straight front view",
+  "description": "A single object seen straight from the front, orthographic, at eye level, on white. Made for Pixal3D, which keeps the picture's camera in the shape: a straight-on view gives it no angle to bake in.",
+  "status": "experimental",
+  "prompt_template": "{prompt}. {style} Show its materials, colours and wear clearly. A single object, the whole object visible and centred, filling about 80% of the frame, seen straight from the front, orthographic projection, camera at the object's mid-height, no perspective distortion, no tilt. Stylized 3D game asset render, solid readable shapes, every part thick and sturdy, parts fused into one solid piece, no thin wires, no loose floating pieces. Soft even studio lighting, flat diffuse light, no cast shadows, no strong highlights or reflections, no ground, no text. Plain white background."
+}

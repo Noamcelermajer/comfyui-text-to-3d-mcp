@@ -1,0 +1,32 @@
+{
+  "id": "concept_turnaround",
+  "kind": "image_edit",
+  "internal": true,
+  "title": "Turnaround sheet from a front view",
+  "description": "Redraws a front-view concept as one sheet of four views (front, left, back, right) for Pixal3D's multi-view model. Prompt adapted from the PixelArtistry Pixal3D multi-view workflow.",
+  "status": "experimental",
+  "graph": "../graphs/qwen_image_21_edit_sheet.json",
+  "vram_group": "qwen_image",
+  "min_vram_gb": 16,
+  "params": {
+    "steps": 25,
+    "width": 4096,
+    "height": 1024
+  },
+  "prompt_template": "Turn the subject in <image1> into an orthographic 3D modeling reference sheet: a single horizontal row of four equal-width panels, evenly spaced. From left to right: 1) front view. 2) left side view, an exact 90 degree profile facing the left edge of the image. 3) back view, exactly 180 degrees. 4) right side view, an exact 90 degree profile facing the right edge of the image. The camera orbits a completely static subject: the same pose and the same head direction in every view, it never turns toward the camera. Identical shapes, colours, proportions and scale in all views, the same art style as <image1>, each view centred in its panel, standing on the same baseline, no overlap between views. Flat, even lighting, solid black background, no text, no labels. {style}",
+  "set": {
+    "5.image": "{image_file}",
+    "6.prompt": "{full_prompt}",
+    "7.seed": "{seed}",
+    "7.steps": "{steps}",
+    "10.width": "{width}",
+    "10.height": "{height}"
+  },
+  "outputs": {
+    "image": {
+      "node": "9",
+      "input": "filename_prefix",
+      "ext": ".png"
+    }
+  }
+}

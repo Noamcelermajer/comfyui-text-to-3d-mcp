@@ -1,0 +1,8 @@
+{
+  "id": "realistic_pbr",
+  "title": "Realistic PBR",
+  "description": "Physically plausible materials and fine surface detail; the look most image-to-3D models are trained on.",
+  "concept": "Realistic PBR game asset, physically plausible materials (worn metal, grained wood, rough stone), fine surface detail, neutral colours.",
+  "params": {},
+  "status": "experimental"
+}

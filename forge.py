@@ -46,6 +46,7 @@ def main():
         p.add_argument("--seed", type=int)
         p.add_argument("--force", action="store_true")
         p.add_argument("--set", action="append", metavar="KEY=VALUE", help="override a profile parameter")
+        p.add_argument("--style-preset", help="style preset id (forge.py profiles lists them)")
 
     sub.add_parser("doctor")
     p = sub.add_parser("setup"); p.add_argument("--dry-run", action="store_true"); p.add_argument("--skip-models", action="store_true")
@@ -100,12 +101,14 @@ def main():
             from assetforge import setup as setup_mod
             out = setup_mod.setup(a.dry_run, a.skip_models, a.skip_nodes, a.pinned, a.all_profiles)
         elif a.cmd == "profiles":
-            out = {"status": "ok", "profiles": profiles.list_profiles(a.project)}
+            out = {"status": "ok", "profiles": profiles.list_profiles(a.project), "styles": profiles.list_styles(a.project)}
         elif a.cmd == "image":
-            out = pipeline.generate_image(a.profile, a.name, a.prompt, a.project, a.out, a.seed, a.style, _params(a.set), a.force)
+            out = pipeline.generate_image(a.profile, a.name, a.prompt, a.project, a.out, a.seed, a.style, _params(a.set), a.force,
+                                          style_preset=a.style_preset)
         elif a.cmd == "asset":
             out = pipeline.generate_asset(a.profile, a.name, a.prompt, a.image, a.project, a.out, a.seed, a.style,
-                                          _params(a.set), a.image_only, a.force, preview=not a.no_preview, preset=a.preset)
+                                          _params(a.set), a.image_only, a.force, preview=not a.no_preview, preset=a.preset,
+                                          style_preset=a.style_preset)
         elif a.cmd == "batch":
             jobs = json.load(open(a.jobs, encoding="utf-8-sig"))
             results = pipeline.generate_batch(jobs, a.project, a.out, a.style, a.force)

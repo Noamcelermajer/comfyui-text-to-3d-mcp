@@ -60,6 +60,14 @@ result lists them under `limited_by_vram`.
 
 Changing the preset or any parameter for the same name regenerates the model but reuses the concept image; identical settings return the cached result.
 
+## Style presets
+
+For a consistent look across a set, pass `style_preset` (ids in `list_profiles` ->
+`styles`): `realistic_pbr`, `hand_painted`, `toon`, `lowpoly_flat`, `voxel`. Use the same
+one for every asset of a game, or set it once in the project's `assetforge.json`. They are
+experimental; say so, and check the preview. The `*_native` profiles honour the most
+style settings; the result's `style_ignored` lists any the profile could not apply.
+
 ## Writing prompts
 
 - Describe **only the subject**: what it is, materials, colours, wear, proportions. The

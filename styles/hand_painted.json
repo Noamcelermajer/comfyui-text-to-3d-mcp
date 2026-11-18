@@ -1,0 +1,10 @@
+{
+  "id": "hand_painted",
+  "title": "Stylised hand-painted",
+  "description": "Chunky proportions and painted-looking colour, in the vein of stylised fantasy MMOs. Lighting is kept flat in the concept so it is not baked twice.",
+  "concept": "Stylised hand-painted fantasy game art, chunky exaggerated proportions, bold readable shapes, painted colour variation and soft colour gradients on every surface, saturated but harmonious palette.",
+  "params": {
+    "crease_angle": 180.0
+  },
+  "status": "experimental"
+}

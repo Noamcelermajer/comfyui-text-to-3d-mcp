@@ -98,12 +98,14 @@ def t_status(a):
 
 
 def t_list_profiles(a):
-    return {"profiles": profiles.list_profiles(a.get("project_dir"))}, []
+    return {"profiles": profiles.list_profiles(a.get("project_dir")),
+            "styles": profiles.list_styles(a.get("project_dir"))}, []
 
 
 def t_generate_image(a):
     fn = lambda: pipeline.generate_image(a.get("profile", "illustration"), a["name"], a["prompt"], a.get("project_dir"),
-                                         a.get("out_dir"), a.get("seed"), a.get("style", ""), a.get("params"), a.get("force", False))
+                                         a.get("out_dir"), a.get("seed"), a.get("style", ""), a.get("params"), a.get("force", False),
+                                         style_preset=a.get("style_preset"))
     return _submit("image", a["name"], fn, a.get("wait_seconds", 50))
 
 
@@ -113,7 +115,7 @@ def t_generate_asset(a):
     fn = lambda: pipeline.generate_asset(a.get("profile", "prop_lowpoly"), a["name"], a.get("prompt"), a.get("image"),
                                          a.get("project_dir"), a.get("out_dir"), a.get("seed"), a.get("style", ""),
                                          a.get("params"), a.get("image_only", False), a.get("force", False),
-                                         preset=a.get("preset", "standard"))
+                                         preset=a.get("preset", "standard"), style_preset=a.get("style_preset"))
     return _submit("asset", a["name"], fn, a.get("wait_seconds", 50))
 
 
@@ -148,7 +150,8 @@ _COMMON = {
     "name": {"type": "string", "description": "Asset id; becomes the file names."},
     "project_dir": _PROJECT,
     "out_dir": {"type": "string", "description": "Output folder; overrides the project's."},
-    "style": {"type": "string", "description": "Art direction added to the prompt; overrides the project's style."},
+    "style": {"type": "string", "description": "Extra art direction added to the prompt, after the style preset and the project's style."},
+    "style_preset": {"type": "string", "description": "Style preset id from list_profiles['styles'] (e.g. hand_painted, toon, lowpoly_flat, voxel, realistic_pbr). Sets the concept-image wording and the look-related model settings. Defaults to the project's style_preset."},
     "seed": {"type": "integer", "description": "Fix the result; change it for a different take."},
     "params": {"type": "object", "description": "Profile parameters to override, e.g. {\"tris\": 5000, \"thin\": 0.9}. list_profiles shows what each profile accepts."},
     "force": {"type": "boolean", "description": "Regenerate even if the files exist."},
@@ -158,7 +161,7 @@ _COMMON = {
 TOOLS = {
     "forge_status": (t_status, "Hardware, whether ComfyUI is running, recent jobs, and a project's settings.",
                      {"project_dir": _PROJECT}, []),
-    "list_profiles": (t_list_profiles, "The available image and asset profiles with their parameters. Call this first to pick a profile.",
+    "list_profiles": (t_list_profiles, "The available image and asset profiles with their parameters and presets, and the style presets. Call this first to pick a profile and a style.",
                       {"project_dir": _PROJECT}, []),
     "generate_image": (t_generate_image,
                        "Text -> image with an image profile (concept_prop, concept_character, icon, illustration). About 20-60 s. Returns the picture, or a job id to poll with get_job.",

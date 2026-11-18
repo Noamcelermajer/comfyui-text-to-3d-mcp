@@ -133,6 +133,48 @@ the model from that picture.
 `.mcp.json`, `.claude/skills/` and `AGENTS.md` inside that project). Each edited file is
 backed up once as `<file>.assetforge.bak`.
 
+## Two pipelines: current and native (experimental)
+
+| | Current (`prop_lowpoly`, `character_lowpoly`) | Native (`prop_native`, `character_native`, `character_turnaround`) |
+| :--- | :--- | :--- |
+| Shape | TRELLIS.2 | Pixal3D by default (TRELLIS.2 with `prop_native_trellis2` or `--set trellis=true`) |
+| Concept view | three-quarter from above | straight front, orthographic, eye level - Pixal3D keeps the picture's camera in the shape, so it gets none to keep |
+| Characters | one front view | one front view, or a generated four-view turnaround sheet (`character_turnaround`, Pixal3D's multi-view model) |
+| Clean-up | WTiVo, LODTailor (Blender), GPU decimation | ComfyUI's built-in remesh, decimate and UV unwrap |
+| Textures | UltraTex (FLUX.2 Klein weights, reported non-commercial) | built-in PBR texture stage, baked colour / metallic / roughness, normal and AO maps |
+| Dependencies | 9 node packs | none beyond ComfyUI 0.45+ |
+| Status | tested | built, not yet run - see the A/B test below |
+
+Why a second pipeline: a verified research pass found Pixal3D leads published
+image-to-3D benchmarks and that its multi-view mode is several times more accurate
+than single-view when the views are clean, which is what a generated turnaround sheet
+gives. The native template also removes every custom node pack and the
+non-commercial texture weights. Both claims are the authors' own, so `tests/ab_test.py`
+runs the same subjects (sword, chain, pole, crate, two characters) through every
+pipeline with fixed seeds and lays the results out on one sheet.
+
+## Style presets (experimental)
+
+A style preset sets the concept image's art direction and the look-related model
+settings, so a whole asset set shares one look. Pick one per call
+(`--style-preset toon`, `"style_preset"` in MCP) or per project (`"style_preset"` in
+`assetforge.json`). Presets apply after `fast`/`standard`/`max`, because they decide the
+look rather than the budget.
+
+| Style | Concept wording | Model settings |
+| :--- | :--- | :--- |
+| `realistic_pbr` | physically plausible materials, fine detail | profile defaults |
+| `hand_painted` | chunky proportions, painted colour variation | smooth shading |
+| `toon` | flat colour areas, clean edges | 1K textures |
+| `lowpoly_flat` | large flat facets, a few colours | 800 triangles, faceted normals (crease angle 30), 512 px maps |
+| `voxel` | blocky forms | rebuilds the finished model as coloured cubes (a hollow shell of exposed faces) |
+
+Styles are JSON files in `styles/` (yours in `styles/user/` or a project's
+`assetforge_styles/`). Settings a profile does not have are skipped and listed under
+`style_ignored` - the current pipeline has no crease-angle or texture-size settings, so
+styles do most on the native one. No style has been tested end to end yet; a style
+LoRA slot is the obvious next step once a style is chosen.
+
 ## Presets
 
 Every asset profile takes a preset: `--preset fast|standard|max` on the command line,

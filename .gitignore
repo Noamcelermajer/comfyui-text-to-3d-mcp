@@ -14,3 +14,6 @@ profiles/user/*
 __pycache__/
 *.pyc
 *.assetforge.bak
+
+# A/B test output
+tests/ab_results/

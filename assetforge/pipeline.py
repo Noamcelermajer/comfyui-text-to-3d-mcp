@@ -7,7 +7,7 @@ import re
 import shutil
 import uuid
 
-from . import comfy, meshcheck, profiles, split
+from . import comfy, meshcheck, postprocess, profiles, split
 from .config import load_machine, log
 
 OUT_SUBFOLDER = "assetforge"
@@ -75,7 +75,10 @@ def run_profile(profile, ctx, run_tag):
             if not optional:
                 missing.append(target if node in g else f"{target} (node {node} not in the graph)")
             continue
-        g[node]["inputs"][key] = _fill(value, ctx)
+        filled = _fill(value, ctx)
+        if filled is None:  # a parameter left at null keeps the graph's own value or link
+            continue
+        g[node]["inputs"][key] = filled
     if missing:
         raise ValueError(f"profile '{profile['id']}' sets inputs its graph does not have: {', '.join(missing)}. "
                          "The workflow or a node pack has changed; update the profile's `set` map.")
@@ -111,15 +114,17 @@ def run_profile(profile, ctx, run_tag):
     return files, seconds, steps
 
 
-def build_prompt(profile, prompt, style=""):
-    style = (style or profile.get("style") or "").strip()
+def build_prompt(profile, prompt, style="", style_text=""):
+    """{style} = the style preset's wording, then the project's style, then the call's."""
+    parts = [t.strip().rstrip(".") for t in (style_text, profile.get("style"), style) if t and t.strip()]
+    style = ". ".join(parts)
     text = profile.get("prompt_template", "{prompt}").replace("{prompt}", prompt.strip().rstrip("."))
     text = text.replace("{style}", (style.rstrip(".") + ".") if style else "")
     return re.sub(r"\s{2,}", " ", text).strip()
 
 
 def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, seed=None, style="",
-                   params=None, force=False, source_image=None):
+                   params=None, force=False, source_image=None, style_preset=None):
     """Text -> image with an image profile. Returns a manifest dict."""
     name = safe_name(name)
     p = profiles.resolve(profile_id, project_dir, params)
@@ -134,7 +139,9 @@ def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, see
         return {"name": name, "status": "ok", "cached": True, "image": dst, "profile": profile_id}
     comfy.ensure_server()
     seed = random.randrange(1, 2**31) if seed is None else int(seed)
-    full = build_prompt(p, prompt, style)
+    st = profiles.load_style(style_preset if style_preset is not None else
+                             profiles.load_project(project_dir).get("style_preset"), project_dir)
+    full = build_prompt(p, prompt or "", style, st.get("concept", "") if st else "")
     ctx = {**p["params"], "prompt": prompt, "full_prompt": full, "seed": seed, "name": name}
     run_tag = f"{name}_{uuid.uuid4().hex[:6]}"
     if source_image:
@@ -147,14 +154,15 @@ def generate_image(profile_id, name, prompt, project_dir=None, out_dir=None, see
         raise comfy.ComfyError("the image run finished but wrote no image")
     shutil.copyfile(files["image"], dst)
     return {"name": name, "status": "ok", "profile": profile_id, "image": dst, "seed": seed,
-            "prompt": prompt, "image_prompt": full, "seconds": seconds}
+            "style_preset": st["id"] if st else None, "prompt": prompt, "image_prompt": full, "seconds": seconds}
 
 
 def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, out_dir=None, seed=None,
-                   style="", params=None, image_only=False, force=False, preview=True, preset="standard"):
+                   style="", params=None, image_only=False, force=False, preview=True, preset="standard",
+                   style_preset=None):
     """Text or image -> checked .glb with an asset profile. Returns a manifest dict."""
     name = safe_name(name)
-    p = profiles.resolve(profile_id, project_dir, params, preset)
+    p = profiles.resolve(profile_id, project_dir, params, preset, style_preset)
     if p.get("kind") != "asset":
         raise ValueError(f"'{profile_id}' is not an asset profile")
     out = out_dir_for(project_dir, out_dir)
@@ -163,7 +171,7 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
     final_glb, concept = os.path.join(out, f"{name}.glb"), os.path.join(out, f"{name}.png")
 
     # The cache key is everything that shapes the model; any change means a new run.
-    settings_key = json.dumps({"profile": profile_id, "preset": p["preset"], "params": p["params"],
+    settings_key = json.dumps({"profile": profile_id, "preset": p["preset"], "style": p["style_preset"], "params": p["params"],
                                "seed": seed, "image": bool(image)}, sort_keys=True, default=str)
     if not force and not image_only and os.path.isfile(final_glb) and os.path.isfile(manifest_path):
         old = json.load(open(manifest_path, encoding="utf-8-sig"))
@@ -176,10 +184,13 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
 
     comfy.ensure_server()
     seed = random.randrange(1, 2**31) if seed is None else int(seed)
-    result = {"name": name, "profile": profile_id, "preset": p["preset"], "status": "error", "seed": seed,
+    result = {"name": name, "profile": profile_id, "preset": p["preset"], "style_preset": p["style_preset"],
+              "status": "error", "seed": seed,
               "settings_key": settings_key, "timings": {}, "attempts": []}
     if p.get("limited_by_vram"):
         result["limited_by_vram"] = p["limited_by_vram"]
+    if p.get("style_ignored"):
+        result["style_ignored"] = p["style_ignored"]
 
     # Stage 1 - concept image: supplied, reused from an earlier image-only run, or generated.
     if image:
@@ -194,7 +205,7 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
         if not prompt:
             raise ValueError("give a prompt or an image")
         img = generate_image(p["image_profile"], name, prompt, project_dir, out, seed, style,
-                             params=p.get("image_params"), force=True)
+                             params=p.get("image_params"), force=True, style_preset=p["style_preset"] or "")
         result.update(image_source="generated", prompt=prompt, image_prompt=img["image_prompt"])
         result["timings"]["image_s"] = img["seconds"]
     result["image"] = concept
@@ -202,19 +213,31 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
         result["status"] = "image_only"
         return result
 
+    # Stage 1b - multi-view profiles: redraw the concept as a turnaround sheet.
+    model_input, extra_ctx = concept, {}
+    if p.get("sheet_profile"):
+        sheet_path = os.path.join(out, f"{name}_sheet.png")
+        if not os.path.isfile(sheet_path) or force or result.get("image_source") == "generated":
+            sh = generate_image(p["sheet_profile"], f"{name}_sheet", "", project_dir, out, seed, style,
+                                force=True, source_image=concept, style_preset=p["style_preset"] or "")
+            result["timings"]["sheet_s"] = sh["seconds"]
+        result["sheet"] = model_input = sheet_path
+        extra_ctx = _sheet_crops(sheet_path, int(p.get("sheet_panels", 4)))
+
     # Stage 2 - 3D, re-running with adjusted parameters when the mesh check fails.
     retry = p.get("retry", {})
     target = p["params"].get(p.get("check", {}).get("target_param", "tris"))
     run_tag = f"{name}_{uuid.uuid4().hex[:6]}"
-    in_name = f"{run_tag}{os.path.splitext(concept)[1].lower()}"
+    in_name = f"{run_tag}{os.path.splitext(model_input)[1].lower()}"
     os.makedirs(comfy.input_dir(), exist_ok=True)
-    shutil.copyfile(concept, os.path.join(comfy.input_dir(), in_name))
+    shutil.copyfile(model_input, os.path.join(comfy.input_dir(), in_name))
     for attempt in range(int(retry.get("attempts", 0)) + 1):
         vals = dict(p["params"])
         for key, step in retry.get("add", {}).items():
             vals[key] = round(vals[key] + step * attempt, 4)
         a_seed = seed + attempt * 7919 if retry.get("reseed", True) else seed
-        ctx = {**vals, "seed": a_seed, "image_file": in_name, "name": name, "blender": load_machine().get("blender", "blender")}
+        ctx = {**vals, **extra_ctx, "seed": a_seed, "image_file": in_name, "name": name,
+               "blender": load_machine().get("blender", "blender")}
         log(f"[{name}] 3D via {profile_id}, attempt {attempt + 1} ...")
         files, seconds, steps = run_profile(p, ctx, f"{run_tag}_a{attempt}")
         primary = files.get(p.get("primary_output", "glb"))
@@ -240,7 +263,18 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
     result["glb"] = final_glb
     result["status"] = "ok" if not result["problems"] else "failed_check"
 
-    # Stage 3 (max preset) - build parts on their own and fit them onto the base model.
+    # Stage 2b - post-processing steps (e.g. the voxel style), applied to the checked model.
+    if result["status"] == "ok" and p["params"].get("postprocess"):
+        result["postprocess"] = []
+        source = os.path.join(out, f"{name}_source.glb")
+        shutil.copyfile(final_glb, source)
+        for step in p["params"]["postprocess"]:
+            opts = (p.get("voxel") or {}) if step == "voxelize" else {}
+            result["postprocess"].append(postprocess.STEPS[step](source if step == p["params"]["postprocess"][0] else final_glb,
+                                                                 final_glb, **opts))
+        result["files"]["source_model"] = source
+
+    # Stage 3 (experimental) - build parts on their own and fit them onto the base model.
     if p.get("split") and result["status"] == "ok":
         result["split"] = _split_stage(p, name, concept, final_glb, out, seed, project_dir, result)
         if result["split"].get("assembled"):
@@ -253,6 +287,15 @@ def generate_asset(profile_id, name, prompt=None, image=None, project_dir=None, 
             result["preview_error"] = str(e)
     json.dump(result, open(manifest_path, "w", encoding="utf-8"), indent=2)
     return result
+
+
+def _sheet_crops(sheet_path, panels):
+    """Equal-width panel boxes for a horizontal turnaround sheet: crop_0 .. crop_{n-1}."""
+    from PIL import Image
+
+    w, h = Image.open(sheet_path).size
+    step = w // panels
+    return {f"crop_{i}": {"x": i * step, "y": 0, "width": step, "height": h} for i in range(panels)}
 
 
 def _split_stage(p, name, concept, base_glb, out, seed, project_dir, result):
@@ -299,7 +342,7 @@ def generate_batch(jobs, project_dir=None, out_dir=None, style="", force=False):
         try:
             generate_asset(job["profile"], name, job.get("prompt"), None, project_dir, out_dir, job.get("seed"),
                            job.get("style", style), job.get("params"), image_only=True, force=force,
-                           preset=job.get("preset", "standard"))
+                           preset=job.get("preset", "standard"), style_preset=job.get("style_preset"))
         except Exception as e:
             results[name] = {"name": name, "status": "error", "error": f"{type(e).__name__}: {e}"}
     for job in jobs:
@@ -315,7 +358,7 @@ def generate_batch(jobs, project_dir=None, out_dir=None, style="", force=False):
                 results[name] = generate_asset(job["profile"], name, None if not job.get("image") else job.get("prompt"),
                                                job.get("image"), project_dir, out_dir, job.get("seed"),
                                                job.get("style", style), job.get("params"), force=force,
-                                               preset=job.get("preset", "standard"))
+                                               preset=job.get("preset", "standard"), style_preset=job.get("style_preset"))
         except Exception as e:
             results[name] = {"name": name, "status": "error", "error": f"{type(e).__name__}: {e}"}
     return list(results.values())
