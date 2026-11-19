@@ -1,0 +1,15 @@
+{
+  "id": "concept_character",
+  "extends": "_qwen_image_base",
+  "title": "Character concept image",
+  "description": "A full-body character in an A-pose, front view, plain white background - the framing rigging tools expect. Describe only the person and outfit; no held items.",
+  "status": "tested",
+  "prompt_template": "Draw a new character standing in exactly the same pose as the grey mannequin in image 1: an A-pose, both arms straight and angled about 45 degrees down from the shoulders, hands open, legs slightly apart, feet pointing forward. Copy only the pose and the framing from image 1, not its colour, shape or material. The character: {prompt}. {style} Full body from head to toe, front view, orthographic, eye-level, centred, nothing cropped. Stylized 3D game character render, clean readable shapes, hair and beard as solid sculpted clumps. Soft even studio lighting, flat diffuse light, no cast shadows, no strong highlights. No hand-held props, no text, no ground shadow. Plain white background.",
+  "graph": "../graphs/qwen_image_21_t2i_posed.json",
+  "input_files": {
+    "pose_file": "../assets/apose_reference.png"
+  },
+  "set": {
+    "10.image": "{pose_file}"
+  }
+}
