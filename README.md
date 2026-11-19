@@ -39,13 +39,14 @@ ComfyUI does the heavy lifting; Asset Forge wraps it in the things an agent need
 text ──► image profile ──► picture ──► asset profile ──► .glb ──► mesh check ──► preview render
 ```
 
-| "a squat stone brazier with a wide iron bowl full of glowing embers" | "an old grave keeper with a long grey beard, a patched grey wool coat..." |
+| "a sturdy wooden supply crate with iron corner brackets and a rope handle" | "an old grave keeper with a long grey beard, a patched grey wool coat..." |
 | :---: | :---: |
-| ![prop](docs/example_prop_brazier.png) | ![character](docs/example_character.png) |
-| `prop_lowpoly` - 2,996 triangles - 5.4 min | `character_lowpoly` - 11,997 triangles - 4.2 min |
+| ![prop](docs/example_prop_crate.png) | ![character](docs/example_character_native.png) |
+| `prop_native_trellis2` - 3,000 triangles - about 1 min | `character_native` - 11,998 triangles - 1 min |
 
-Timings are from an RTX 5080 (16 GB), the only hardware this has been measured on, with
-the texture model at 4 steps; the current standard preset uses 12 and takes longer.
+Timings are from an RTX 5080 (16 GB), the only hardware this has been measured on, at
+the standard preset. The crate took 4.5 min because its first mesh failed the check and
+was regenerated; the other props in the A/B test took 41-50 s.
 
 - **MCP server** - 7 tools (`list_profiles`, `generate_image`, `generate_asset`, `get_job`,
   `check_mesh`, `models`, `forge_status`), stdio, no dependencies of its own.
@@ -133,17 +134,18 @@ the model from that picture.
 `.mcp.json`, `.claude/skills/` and `AGENTS.md` inside that project). Each edited file is
 backed up once as `<file>.assetforge.bak`.
 
-## Two pipelines: current and native (experimental)
+## Two pipelines: native (default) and UltraTex
 
-| | Current (`prop_lowpoly`, `character_lowpoly`) | Native (`prop_native`, `character_native`, `character_turnaround`) |
+| | UltraTex (`prop_lowpoly`, `character_lowpoly`) | Native (`prop_native_trellis2`, `character_native`, plus `prop_native`, `character_turnaround`) |
 | :--- | :--- | :--- |
-| Shape | TRELLIS.2 | Pixal3D by default (TRELLIS.2 with `prop_native_trellis2` or `--set trellis=true`) |
+| Shape | TRELLIS.2 | props: TRELLIS.2 (`prop_native_trellis2`); characters: Pixal3D (`character_native`). `prop_native` is Pixal3D for props |
 | Concept view | three-quarter from above | straight front, orthographic, eye level - Pixal3D keeps the picture's camera in the shape, so it gets none to keep |
 | Characters | one front view | one front view, or a generated four-view turnaround sheet (`character_turnaround`, Pixal3D's multi-view model) |
 | Clean-up | WTiVo, LODTailor (Blender), GPU decimation | ComfyUI's built-in remesh, decimate and UV unwrap |
 | Textures | UltraTex (FLUX.2 Klein weights, reported non-commercial) | built-in PBR texture stage, baked colour / metallic / roughness, normal and AO maps |
 | Dependencies | 9 node packs | none beyond ComfyUI 0.45+ |
-| Status | tested | built, not yet run - see the A/B test below |
+| Speed (standard, 16 GB) | about 4-5 min | about 1 min |
+| Status | tested; the default on cards under 12 GB | tested; the default from 12 GB (`prop_native`, `character_turnaround` experimental) |
 
 Why a second pipeline: a verified research pass found Pixal3D leads published
 image-to-3D benchmarks and that its multi-view mode is several times more accurate
@@ -152,6 +154,23 @@ gives. The native template also removes every custom node pack and the
 non-commercial texture weights. Both claims are the authors' own, so `tests/ab_test.py`
 runs the same subjects (sword, chain, pole, crate, two characters) through every
 pipeline with fixed seeds and lays the results out on one sheet.
+
+Result (2026-11-18, standard preset, one seed per subject):
+
+![A/B sheet](docs/ab_sheet.jpg)
+
+- **Props: TRELLIS.2 native.** Same shapes as the UltraTex pipeline in the previews, at
+  41-50 s instead of 250-300 s, and one solid piece every time. The UltraTex pipeline left
+  the pole in 58 pieces and failed the crate after 22 minutes of retries.
+- **Pixal3D from one front view inflates depth on flat props** (the sword came out 31% as
+  thick as it is long, against 10% from TRELLIS.2), so `prop_native` stays experimental.
+- **Characters: Pixal3D from one front view.** About 60 s, one piece, textures on a par
+  with UltraTex. The four-view turnaround took twice as long with no visible gain, and the
+  re-drawn sheet changed one character's coat colour, so `character_turnaround` stays
+  experimental.
+
+To pin a project to one pipeline, set `"default_profiles": {"prop": "prop_lowpoly",
+"character": "character_lowpoly"}` in its `assetforge.json`.
 
 ## Style presets (experimental)
 
@@ -303,8 +322,10 @@ To move Asset Forge to another machine: copy this folder, run `forge.py doctor`,
 
 ## Status and limits
 
-- Profiles marked `tested` (`concept_prop`, `concept_character`, `prop_lowpoly`,
-  `character_lowpoly`) have been run end to end and inspected at the standard preset;
+- Profiles marked `tested` (`concept_prop`, `concept_character`, `prop_native_trellis2`,
+  `character_native`, `prop_lowpoly`, `character_lowpoly`) have been run end to end and
+  inspected at the standard preset (the native ones on six subjects in the A/B test);
+  for the UltraTex profiles
   `fast` was verified on a prop and `max` on a character. `icon` and `illustration`, prop
   `max` and character `fast` have not been run yet.
 - Thin, lace-like or caged shapes are the usual failure; the mesh check catches them and

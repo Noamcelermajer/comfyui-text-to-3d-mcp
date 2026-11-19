@@ -112,7 +112,7 @@ def t_generate_image(a):
 def t_generate_asset(a):
     if not a.get("prompt") and not a.get("image"):
         raise ValueError("give a prompt or an image path")
-    fn = lambda: pipeline.generate_asset(a.get("profile", "prop_lowpoly"), a["name"], a.get("prompt"), a.get("image"),
+    fn = lambda: pipeline.generate_asset(a.get("profile") or profiles.default_profile("prop", a.get("project_dir")), a["name"], a.get("prompt"), a.get("image"),
                                          a.get("project_dir"), a.get("out_dir"), a.get("seed"), a.get("style", ""),
                                          a.get("params"), a.get("image_only", False), a.get("force", False),
                                          preset=a.get("preset", "standard"), style_preset=a.get("style_preset"))
@@ -170,7 +170,7 @@ TOOLS = {
                         **_COMMON}, ["name", "prompt"]),
     "generate_asset": (t_generate_asset,
                        "Text or image -> game-ready .glb (low-poly mesh, normal map, PBR textures) with an asset profile, followed by an automatic mesh check and a rendered preview. Takes 3-8 minutes: this returns a job id, then poll get_job. Use image_only=true first to approve the concept picture cheaply.",
-                       {"profile": {"type": "string", "description": "Asset profile id (default prop_lowpoly)."},
+                       {"profile": {"type": "string", "description": "Asset profile id. Default: prop_native_trellis2 for props; use character_native for characters. On cards under 12 GB these fall back to prop_lowpoly / character_lowpoly."},
                         "prompt": {"type": "string", "description": "What the asset is: materials, colours, wear, proportions. Not needed when `image` is given or a concept image already exists for this name."},
                         "image": {"type": "string", "description": "Absolute path of a concept image to build from instead of generating one."},
                         "image_only": {"type": "boolean", "description": "Stop after the concept image."},

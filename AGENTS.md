@@ -113,7 +113,7 @@ Any other MCP client: add a stdio server with command `python` and arguments
 ### 5. Prove it works
 
 ```
-python forge.py asset setup_test "a chunky wooden treasure chest with iron bands" -p prop_lowpoly
+python forge.py asset setup_test "a chunky wooden treasure chest with iron bands" -p prop_native_trellis2
 ```
 
 This takes several minutes (longer on the first run, while weights load). Success is

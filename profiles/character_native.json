@@ -1,9 +1,9 @@
 {
   "id": "character_native",
   "extends": "prop_native",
-  "title": "Character (native Pixal3D pipeline)",
+  "title": "Low-poly character (default)",
   "description": "A full-body character from one front-view A-pose concept through the built-in Pixal3D nodes, about 12,000 triangles.",
-  "status": "experimental",
+  "status": "tested",
   "image_profile": "concept_character",
   "params": {
     "tris": 12000

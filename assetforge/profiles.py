@@ -154,6 +154,24 @@ def resolve(pid, project_dir=None, params=None, preset=None, style=None):
     return p
 
 
+# Default asset profiles, picked by an A/B test (tests/ab_test.py, 2026-11-18): the native
+# built-in pipelines matched the UltraTex ones in quality at 4-5x the speed. Cards below a
+# default's min_vram_gb fall back to the UltraTex pipeline, which runs from 8 GB.
+DEFAULT_ASSET = {"prop": "prop_native_trellis2", "character": "character_native"}
+FALLBACK_ASSET = {"prop": "prop_lowpoly", "character": "character_lowpoly"}
+
+
+def default_profile(kind="prop", project_dir=None):
+    """The asset profile to use when none is named: the project's choice, else the default for this GPU."""
+    chosen = (load_project(project_dir).get("default_profiles") or {}).get(kind)
+    if chosen:
+        return chosen
+    pid = DEFAULT_ASSET[kind]
+    if load_machine()["tier"] < _extended(pid, _raw_profiles(project_dir)).get("min_vram_gb", 0):
+        return FALLBACK_ASSET[kind]
+    return pid
+
+
 def graph_path(profile):
     g = profile["graph"]
     for base in (profile.get("_dir", ""), FORGE_ROOT):

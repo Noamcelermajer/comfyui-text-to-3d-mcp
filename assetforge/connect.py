@@ -159,8 +159,8 @@ PROJECT_TEMPLATE = {
     "style": "",
     "output_dir": "assets/generated",
     "profiles": {
-        "prop_lowpoly": {"params": {"tris": 3000}},
-        "character_lowpoly": {"params": {"tris": 12000}}
+        "prop_native_trellis2": {"params": {"tris": 3000}},
+        "character_native": {"params": {"tris": 12000}}
     }
 }
 

@@ -1,8 +1,8 @@
 {
   "id": "prop_lowpoly",
   "kind": "asset",
-  "title": "Low-poly prop",
-  "description": "Weapons, furniture, pickups, scenery. About 3,000 triangles with a baked normal map and 2K PBR textures. Tuned and verified on a 16 GB card.",
+  "title": "Low-poly prop (UltraTex pipeline)",
+  "description": "Weapons, furniture, pickups, scenery. About 3,000 triangles with a baked normal map and 2K PBR textures. Tuned and verified on a 16 GB card. Slower (about 4-5 min) and its texture weights are reported non-commercial; the default on cards under 12 GB.",
   "status": "tested",
   "image_profile": "concept_prop",
   "graph": "../workflows/lowpoly_prop_ultratex.json",

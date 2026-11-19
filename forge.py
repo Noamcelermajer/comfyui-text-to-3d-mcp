@@ -4,7 +4,7 @@ r"""Asset Forge command line. Every command prints one JSON object on stdout.
   forge.py doctor                              detect hardware, check ComfyUI, Blender and model files
   forge.py profiles                            list profiles and their parameters
   forge.py image  NAME "prompt" [-p icon]      text -> image
-  forge.py asset  NAME "prompt" [-p prop_lowpoly] [--preset fast|standard|max] [--image-only] [--image FILE] [--set tris=5000]
+  forge.py asset  NAME "prompt" [-p prop_native_trellis2] [--preset fast|standard|max] [--image-only] [--image FILE] [--set tris=5000]
   forge.py batch  jobs.json                    many assets; images first, then models
   forge.py check  model.glb                    mesh check + preview render
   forge.py models [--install FILE ...]         what each profile needs / download catalog files
@@ -53,7 +53,7 @@ def main():
     p.add_argument("--skip-nodes", action="store_true"); p.add_argument("--pinned", action="store_true"); p.add_argument("--all-profiles", action="store_true")
     p = sub.add_parser("profiles"); p.add_argument("--project")
     p = sub.add_parser("image"); p.add_argument("name"); p.add_argument("prompt"); p.add_argument("-p", "--profile", default="illustration"); common(p)
-    p = sub.add_parser("asset"); p.add_argument("name"); p.add_argument("prompt", nargs="?"); p.add_argument("-p", "--profile", default="prop_lowpoly")
+    p = sub.add_parser("asset"); p.add_argument("name"); p.add_argument("prompt", nargs="?"); p.add_argument("-p", "--profile", help="asset profile (default: the prop default for this GPU)")
     p.add_argument("--image"); p.add_argument("--image-only", action="store_true"); p.add_argument("--preset", choices=["fast", "standard", "max"], default="standard"); p.add_argument("--no-preview", action="store_true"); common(p)
     p = sub.add_parser("batch"); p.add_argument("jobs"); common(p)
     p = sub.add_parser("check"); p.add_argument("glb"); p.add_argument("--tris", type=int); p.add_argument("--no-preview", action="store_true")
@@ -106,7 +106,7 @@ def main():
             out = pipeline.generate_image(a.profile, a.name, a.prompt, a.project, a.out, a.seed, a.style, _params(a.set), a.force,
                                           style_preset=a.style_preset)
         elif a.cmd == "asset":
-            out = pipeline.generate_asset(a.profile, a.name, a.prompt, a.image, a.project, a.out, a.seed, a.style,
+            out = pipeline.generate_asset(a.profile or profiles.default_profile("prop", a.project), a.name, a.prompt, a.image, a.project, a.out, a.seed, a.style,
                                           _params(a.set), a.image_only, a.force, preview=not a.no_preview, preset=a.preset,
                                           style_preset=a.style_preset)
         elif a.cmd == "batch":

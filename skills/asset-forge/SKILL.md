@@ -18,8 +18,8 @@ Otherwise use the command line from the Asset Forge folder; every command prints
 ```
 python forge.py profiles
 python forge.py image  <name> "<prompt>" -p icon --project <game folder>
-python forge.py asset  <name> "<prompt>" -p prop_lowpoly --project <game folder>
-python forge.py asset  <name> --image <picture> -p prop_lowpoly --project <game folder>
+python forge.py asset  <name> "<prompt>" -p prop_native_trellis2 --project <game folder>
+python forge.py asset  <name> --image <picture> -p character_native --project <game folder>
 python forge.py check  <model.glb>
 ```
 
@@ -29,14 +29,18 @@ Exit code 0 = ok, 2 = finished but the mesh failed its check, 1 = error.
 
 1. **Pick a profile** with `list_profiles`. Image profiles make pictures (`concept_prop`,
    `concept_character`, `icon`, `illustration`); asset profiles make 3D models
-   (`prop_lowpoly`, `character_lowpoly`), each with three presets (see below). Profiles marked `experimental`
-   have not been verified on this machine - say so if you use one.
+   with three presets each (see below). Use `prop_native_trellis2` for props and
+   `character_native` for characters (about a minute each); omitting the profile gives the
+   prop default. `prop_lowpoly` / `character_lowpoly` are the slower UltraTex pipeline, the
+   fallback on cards under 12 GB - use them only if the user asks or the GPU is small. Profiles
+   marked `experimental` have not been verified on this machine - say so if you use one.
 2. **Always pass the game project folder** (`project_dir` / `--project`). Its
    `assetforge.json` supplies the art style, the output folder and per-profile settings,
    so assets stay consistent. If the project has none, offer to create one (`forge.py init <dir>`).
 3. **For 3D, approve the picture first.** Call `generate_asset` with `image_only: true`
    (about a minute), look at the image, and only then call it again without `image_only`
-   (3-8 minutes). The second call reuses the approved image; no prompt is needed.
+   (about a minute with the default profiles, 4-8 with UltraTex). The second call reuses
+   the approved image; no prompt is needed.
 4. **3D jobs are asynchronous.** `generate_asset` returns a job id; call `get_job` with
    `wait_seconds: 50` repeatedly until the status is not `queued` or `running`. Run one
    asset at a time - there is one GPU.
@@ -50,12 +54,11 @@ asset is for, and say which one you used.
 
 | Preset | Use it for | Cost |
 | :--- | :--- | :--- |
-| `fast` | Blocking out, background clutter, distant or mobile assets: the lowest triangle count (about 800 for a prop, 4,000 for a character). | about 2 minutes |
-| `standard` | The default. 3,000-triangle props, 12,000-triangle characters. | about 6-8 minutes |
+| `fast` | Blocking out, background clutter, distant or mobile assets: the lowest triangle count (about 800 for a prop, 4,000 for a character). | 1-2 minutes |
+| `standard` | The default. 3,000-triangle props, 12,000-triangle characters. | about 1 minute (native, measured); 4-5 minutes (UltraTex) |
 | `max` | Hero assets the camera gets close to: full shape resolution and the most texture detail (props 8,000 triangles). | longest; not yet measured |
 
-Standard and max times are estimates: the texture step count was raised and new timings
-have not been measured. On cards under 16 GB some settings are capped automatically; the
+Native fast and all max times are estimates; native standard was measured on six subjects. On cards under 16 GB some settings are capped automatically; the
 result lists them under `limited_by_vram`.
 
 Changing the preset or any parameter for the same name regenerates the model but reuses the concept image; identical settings return the cached result.
